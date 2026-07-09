@@ -1,0 +1,88 @@
+name: SchemaForge Public Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'templates/**/*.xlsx'
+      - 'scripts/**/*.py'
+      - 'scripts/pipeline_run.sh'
+      - '.github/workflows/schemaforge-public-pipeline.yml'
+  pull_request:
+    paths:
+      - 'templates/**/*.xlsx'
+      - 'scripts/**/*.py'
+      - 'scripts/pipeline_run.sh'
+      - '.github/workflows/schemaforge-public-pipeline.yml'
+  workflow_dispatch:
+    inputs:
+      kbob_workbook:
+        description: 'Relativer Pfad zur validierten KBOB-FM-Workbook-Datei'
+        required: false
+        default: 'templates/Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx'
+      areamgmt_workbook:
+        description: 'Relativer Pfad zur validierten AreaMgmt-Workbook-Datei'
+        required: false
+        default: 'templates/Strukturvorlage_AreaMgmt_v0.5.0.xlsx'
+
+jobs:
+  schemaforge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openpyxl rdflib
+
+      - name: Determine input workbooks
+        id: inputs
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.kbob_workbook }}" ]; then
+            echo "kbob=${{ github.event.inputs.kbob_workbook }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "kbob=templates/Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "${{ github.event.inputs.areamgmt_workbook }}" ]; then
+            echo "areamgmt=${{ github.event.inputs.areamgmt_workbook }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "areamgmt=templates/Strukturvorlage_AreaMgmt_v0.5.0.xlsx" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run SchemaForge pipeline
+        run: |
+          bash scripts/pipeline_run.sh out \
+            "${{ steps.inputs.outputs.kbob }}" \
+            "${{ steps.inputs.outputs.areamgmt }}"
+
+      - name: Publish workflow summary
+        shell: bash
+        run: |
+          echo "# SchemaForge output" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          printf 'KBOB workbook: `%s`\n\n' "${{ steps.inputs.outputs.kbob }}" >> "$GITHUB_STEP_SUMMARY"
+          printf 'AreaMgmt workbook: `%s`\n\n' "${{ steps.inputs.outputs.areamgmt }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f out/combined.ttl ]; then
+            echo '- `out/combined.ttl` generated' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f out/i14y_bundle.json ]; then
+            echo '- `out/i14y_bundle.json` generated' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload SchemaForge artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: schemaforge-output
+          path: |
+            out/combined.ttl
+            out/i14y_bundle.json
+          if-no-files-found: error

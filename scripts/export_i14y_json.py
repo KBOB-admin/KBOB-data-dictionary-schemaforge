@@ -28,6 +28,14 @@ DEFAULT_OUT = BASE_DIR / 'out' / 'i14y_bundle.json'
 PARTNER_SPEC = BASE_DIR / 'external' / 'apiconsole__partner__v1__Release.json'
 
 
+def display_workbook_path(path: Path) -> str:
+    path = Path(path)
+    try:
+        return str(path.resolve().relative_to(BASE_DIR.resolve()))
+    except Exception:
+        return path.name
+
+
 def slug(text: str) -> str:
     text = (text or '').strip().lower()
     repl = {
@@ -224,7 +232,7 @@ def build_dataset_payload(ctx: WorkbookContext) -> dict[str, Any]:
         'description': descriptions,
         'publisher': identifier_model(ctx.publisher),
         'title': title_ml,
-        'identifiers': [ctx.dataset_identifier, str(ctx.path)],
+        'identifiers': [ctx.dataset_identifier, display_workbook_path(ctx.path)],
         'issued': ctx.release_date,
         'modified': ctx.modified_date,
         'version': ctx.version,
@@ -287,7 +295,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
             'ifcEntity': c.get('IfcObject Entity'),
             'ifcTypeObjectEntity': c.get('IfcTypeObject Entity'),
             'predefinedType': c.get('PredefinedType'),
-            'sourceWorkbook': str(ctx.path),
+            'sourceWorkbook': display_workbook_path(ctx.path),
             'i14yDatasetUri': ctx.dataset_uri,
         })
     for g in gops:
@@ -312,7 +320,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
             'kind': 'groupOfProperties',
             'code': code,
             'ownedUri': owned,
-            'sourceWorkbook': str(ctx.path),
+            'sourceWorkbook': display_workbook_path(ctx.path),
             'i14yDatasetUri': ctx.dataset_uri,
         })
     for p in props:
@@ -346,7 +354,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
             'unitNameEn': p.get('Unit Name (EN)'),
             'dataType': p.get('DataType\n(Base Type)'),
             'dataTypeIfc': p.get('DataType\n(IFC)'),
-            'sourceWorkbook': str(ctx.path),
+            'sourceWorkbook': display_workbook_path(ctx.path),
             'i14yDatasetUri': ctx.dataset_uri,
             'enumerationDesignation': p.get('EnumerationDesignation (EN)'),
         })
@@ -357,7 +365,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
             'relationType': r.get('RelationType'),
             'relatedPropertyUri': r.get('RelatedPropertyUri'),
             'notes': r.get('Notes'),
-            'sourceWorkbook': str(ctx.path),
+            'sourceWorkbook': display_workbook_path(ctx.path),
         })
     codelist_entries = []
     for pcode, vals in by_prop_code.items():
@@ -407,7 +415,7 @@ def build_bundle(workbooks: list[Path]):
         dataset_payload = build_dataset_payload(ctx)
         concepts, anchors, skos_relations, code_entries = build_concepts(ctx, classes, props, gops, values, concept_relations)
         bundle['datasets'].append({
-            'sourceWorkbook': str(wb_path),
+            'sourceWorkbook': display_workbook_path(wb_path),
             'i14yRecordUri': ctx.dataset_uri,
             'lindasGraphUri': ctx.lindas_base,
             'partnerApi': dataset_payload,
@@ -426,7 +434,7 @@ def build_bundle(workbooks: list[Path]):
         bundle['semantic']['crossLinks'].append({
             'datasetUri': ctx.dataset_uri,
             'lindasGraphUri': ctx.lindas_base,
-            'sourceWorkbook': str(wb_path),
+            'sourceWorkbook': display_workbook_path(wb_path),
             'note': 'I14Y record should reference LINDAS authoritative IRIs; LINDAS RDF should reference this I14Y dataset URI as provenance.'
         })
     return bundle
@@ -459,7 +467,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('workbooks', nargs='*', default=[
         str(BASE_DIR / 'templates' / 'Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx'),
-        str(BASE_DIR / 'templates' / 'Data Dictionary_BdCH_AreaMgmt_v0.9.6.xlsx'),
+        str(BASE_DIR / 'templates' / 'Strukturvorlage_AreaMgmt_v0.5.0.xlsx'),
     ])
     ap.add_argument('--out', default=str(DEFAULT_OUT))
     args = ap.parse_args(argv)
