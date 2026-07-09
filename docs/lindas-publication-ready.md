@@ -4,11 +4,12 @@ Tomorrow, to publish immediately, only these steps should be needed:
 
 ## 1. Provide credentials
 
-Copy:
+Either:
 
-- `external/lindas.ini.template` -> `external/lindas.ini`
+- copy `external/lindas.ini.template` -> `external/lindas.ini` and fill the `INT` section locally, or
+- let `scripts/publish_to_lindas.py` prompt interactively for username/token, password/token, and graph when `--publish` is used.
 
-Fill the `INT` section with the provided token/credentials.
+The real `external/lindas.ini` must stay local and uncommitted.
 
 ## 2. Publish to INT
 

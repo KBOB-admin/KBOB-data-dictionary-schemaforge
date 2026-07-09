@@ -18,8 +18,8 @@ Current MVP focus:
 ## Expected inputs
 
 The active pipeline is currently exercised against validated workbook variants such as:
-- `Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx`
-- `Data Dictionary_BdCH_AreaMgmt_v0.9.6.xlsx`
+- `templates/Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx`
+- `templates/Data Dictionary_BdCH_AreaMgmt_v0.9.6.xlsx`
 
 Validated workbook generation and structural checks live in the separate validator repository.
 
@@ -67,7 +67,10 @@ python scripts/export_i14y_json.py <kbob-workbook.xlsx> <areamgmt-workbook.xlsx>
 python scripts/publish_to_lindas.py --ttl out/combined.ttl
 ```
 
-Real publication requires a valid `external/lindas.ini` and explicit `--publish`.
+Real publication requires explicit `--publish` and local-only credentials.
+The script supports either:
+- a local uncommitted `external/lindas.ini`, or
+- interactive prompting / environment variables for credentials and graph settings.
 
 ## Notes
 

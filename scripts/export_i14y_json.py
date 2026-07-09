@@ -458,8 +458,8 @@ def validate_bundle(bundle: dict[str, Any]) -> list[str]:
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('workbooks', nargs='*', default=[
-        str(BASE_DIR / 'templates' / 'Strukturvorlage_DataDictionary_KBOB_FM.xlsx'),
-        str(BASE_DIR / 'templates' / 'Strukturvorlage_DataDictionary_AreaMgmt.xlsx'),
+        str(BASE_DIR / 'templates' / 'Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx'),
+        str(BASE_DIR / 'templates' / 'Data Dictionary_BdCH_AreaMgmt_v0.9.6.xlsx'),
     ])
     ap.add_argument('--out', default=str(DEFAULT_OUT))
     args = ap.parse_args(argv)
