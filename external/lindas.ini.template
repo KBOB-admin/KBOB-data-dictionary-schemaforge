@@ -1,0 +1,12 @@
+; Copy this file to lindas.ini and fill in the token/credentials tomorrow.
+; pylindas uses Stardog connection settings.
+
+[INT]
+endpoint = https://int.lindas.admin.ch
+username = __TOKEN_OR_USER__
+password = __TOKEN_OR_PASSWORD__
+
+[PROD]
+endpoint = https://lindas.admin.ch
+username = __TOKEN_OR_USER__
+password = __TOKEN_OR_PASSWORD__

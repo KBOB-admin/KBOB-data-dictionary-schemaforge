@@ -1,0 +1,18 @@
+# Archived / legacy material
+/archive/
+
+# Local Python environments and caches
+.venv/
+__pycache__/
+*.pyc
+
+# Generated outputs
+/out/
+
+# Editor / local tool artefacts
+.vscode/
+external/*__backup.json
+external/*__.vscode__*.json
+
+# OS noise
+.DS_Store

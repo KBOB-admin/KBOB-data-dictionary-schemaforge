@@ -1,0 +1,9 @@
+SourceProperty,RelationType,TargetRef,TargetKind,Notes
+geschoss,skos:exactMatch,https://bauen-digital.ch/class/geschossebene,external,Both map to IfcBuildingStorey/no PredefinedType — semantically equivalent storey/floor level
+raum,skos:broadMatch,https://bauen-digital.ch/class/geschossvolumen,external,KBOB raum=generic IfcSpace; bDCH geschossvolumen=IfcSpace/GFA specialization
+raum,skos:broadMatch,https://bauen-digital.ch/class/grundstuckflache,external,KBOB raum=generic IfcSpace; bDCH grundstuckflache=IfcSpace/USERDEFINED site area
+raum,skos:broadMatch,https://bauen-digital.ch/class/umgebungsflache,external,KBOB raum=generic IfcSpace; bDCH umgebungsflache=IfcSpace/USERDEFINED surrounding area
+raum,skos:broadMatch,https://bauen-digital.ch/class/nettogeschossflache,external,KBOB raum=generic IfcSpace; bDCH nettogeschossflache=IfcSpace/USERDEFINED net floor area
+raum,skos:broadMatch,https://bauen-digital.ch/class/aussen-nettogeschossflache,external,KBOB raum=generic IfcSpace; bDCH aussen-nettogeschossflache=IfcSpace/USERDEFINED exterior NGA
+raum,skos:broadMatch,https://bauen-digital.ch/class/stellplatz,external,KBOB raum=generic IfcSpace; bDCH stellplatz=IfcSpace/PARKING specialization
+raum,skos:broadMatch,https://bauen-digital.ch/class/vermietbare-flache,external,KBOB raum=generic IfcSpace; bDCH vermietbare-flache=IfcSpace/USERDEFINED rentable area
