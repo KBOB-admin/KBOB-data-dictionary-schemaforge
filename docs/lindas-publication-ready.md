@@ -2,6 +2,8 @@
 
 Für eine sofortige Publikation sollten nur noch diese Schritte nötig sein:
 
+> **Wichtiger Hinweis:** Dieses Repository stellt nur ein Publikationshilfsmittel bereit. Zugangsdaten, Graphbestellung, Berechtigungen, Zielgraphen, Freigaben und tatsächliche Publikationshandlungen liegen vollständig in der Verantwortung der nutzenden Organisation.
+
 ## 1. Zugangsdaten bereitstellen
 
 Entweder:

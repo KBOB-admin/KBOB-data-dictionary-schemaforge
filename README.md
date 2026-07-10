@@ -1,16 +1,19 @@
 # KBOB Data Dictionary SchemaForge
 
-Öffentliche MVP-Pipeline zur Transformation validierter KBOB-Data-Dictionary-Arbeitsmappen in:
+Öffentliche Publikationspipeline zur Transformation validierter KBOB-Data-Dictionary-Arbeitsmappen in:
 
 - RDF/Turtle, ausgerichtet auf eine Publikation in LINDAS INT
 - ein I14Y-orientiertes JSON-Bundle für Katalog- und Import-Workflows
 
+> **Wichtiger Hinweis:** Das Repository `KBOB-data-dictionary-schemaforge` ist derzeit ein Arbeitsrepository. Aktuell werden **keine Supportleistungen**, **keine individuelle Hilfestellung**, **keine Kontaktadresse** und **kein betreuter Kommunikationskanal** angeboten. Bitte nutzen Sie die bereitgestellten Dateien und Hinweise ausschliesslich in eigener Verantwortung.
+
 ## Geltungsbereich
 
-Dieses Repository ist bewusst auf den SchemaForge-MVP-Publikationspfad beschränkt.
-Es ist nicht das Validator-Repository und nicht der vollständige historische Autoren-Arbeitsbereich.
+Dieses Repository stellt ein Publikationshilfsmittel für validierte Data Dictionaries bereit.
+Es baut auf dem Repository [`KBOB-data-dictionary`](https://github.com/KBOB-admin/KBOB-data-dictionary) auf und verwendet validierte Data-Dictionary-Arbeitsmappen als Eingabe.
+Wenn die Validierung systemgenerierte Daten oder sichere Normalisierungen in eine validierte Arbeitsmappe zurückschreibt, können auch diese angereicherten Data Dictionaries als Input für diese Publikationspipeline verwendet werden.
 
-Aktueller MVP-Fokus:
+Aktueller Fokus:
 
 - validierte Arbeitsmappen als Eingabe verwenden
 - IFC 4.3, QUDT, SKOS und Provenienz-Anker erhalten
@@ -24,7 +27,7 @@ Die aktive Pipeline wird derzeit gegen validierte Arbeitsmappenvarianten ausgef�
 - `templates/Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx`
 - `templates/Data Dictionary_BdCH_AreaMgmt_v0.9.6.xlsx`
 
-Die Erzeugung validierter Arbeitsmappen und die strukturellen Prüfungen liegen im separaten Validator-Repository.
+Die Erzeugung validierter Arbeitsmappen, die strukturellen Prüfungen und die validatorseitigen Rückschreibungen liegen im Repository [`KBOB-data-dictionary`](https://github.com/KBOB-admin/KBOB-data-dictionary).
 
 ## Repository-Struktur
 
@@ -82,3 +85,4 @@ Das Skript unterstützt entweder:
 - Pfade in den aktiven Skripten sind repository-relativ, nicht absolut auf ein Benutzerverzeichnis bezogen.
 - Publikation ist standardmässig deaktiviert und soll Dry-Run bleiben, sofern Zugangsdaten und Konfiguration nicht bewusst bereitgestellt werden.
 - Dieses Repository ist öffentlich nutzbar, aber nicht automatisch live geschaltet; Publikation bleibt ein expliziter Schritt.
+- Zugangsdaten, Graphbestellung, Berechtigungen, Zielgraphen, Freigaben und tatsächliche Publikationshandlungen liegen vollständig in der Verantwortung der nutzenden Organisation.
