@@ -1,17 +1,17 @@
-# LINDAS publication readiness
+# LINDAS-Publikationsbereitschaft
 
-Tomorrow, to publish immediately, only these steps should be needed:
+Für eine sofortige Publikation sollten nur noch diese Schritte nötig sein:
 
-## 1. Provide credentials
+## 1. Zugangsdaten bereitstellen
 
-Either:
+Entweder:
 
-- copy `external/lindas.ini.template` -> `external/lindas.ini` and fill the `INT` section locally, or
-- let `scripts/publish_to_lindas.py` prompt interactively for username/token, password/token, and graph when `--publish` is used.
+- `external/lindas.ini.template` nach `external/lindas.ini` kopieren und den Abschnitt `INT` lokal ausfüllen, oder
+- `scripts/publish_to_lindas.py` bei Verwendung von `--publish` interaktiv nach Benutzername/Token, Passwort/Token und Graph fragen lassen.
 
-The real `external/lindas.ini` must stay local and uncommitted.
+Die reale Datei `external/lindas.ini` muss lokal bleiben und darf nicht committet werden.
 
-## 2. Publish to INT
+## 2. Nach INT publizieren
 
 ```bash
 python scripts/publish_to_lindas.py \
@@ -21,7 +21,7 @@ python scripts/publish_to_lindas.py \
   --publish
 ```
 
-Optional full refresh:
+Optionaler vollständiger Refresh:
 
 ```bash
 python scripts/publish_to_lindas.py \
@@ -32,26 +32,26 @@ python scripts/publish_to_lindas.py \
   --publish
 ```
 
-## 3. Query channels ready
+## 3. Abfragekanäle sind vorbereitet
 
-Prepared now:
+Jetzt vorbereitet:
 
-- Python / pyLINDAS-adjacent example:
+- Python- / pyLINDAS-nahes Beispiel:
   - `examples/pylindas_query_example.py`
-- direct SPARQL examples:
+- direkte SPARQL-Beispiele:
   - `docs/lindas-int-queries.md`
-- third access channel:
-  - HTTP dereferencing via `curl -H 'Accept: text/turtle' <resource-iri>`
+- dritter Zugriffskanal:
+  - HTTP-Dereferenzierung über `curl -H 'Accept: text/turtle' <resource-iri>`
 
-## Notes
+## Hinweise
 
-- Current graph artifact: `out/combined.ttl`
-- Current graph namespace: `https://lindas.admin.ch/fobl/kbob/dd-fm`
-- Current publication model includes:
-  - classes
-  - properties
-  - group of properties
-  - values / allowed values where workbook evidence exists
-  - SKOS cross-dictionary links
-  - IFC SSOT links
-  - QUDT unit links
+- Aktuelles Graph-Artefakt: `out/combined.ttl`
+- Aktueller Graph-Namespace: `https://lindas.admin.ch/fobl/kbob/dd-fm`
+- Das aktuelle Publikationsmodell umfasst:
+  - Klassen
+  - Properties
+  - Groups of Properties
+  - Werte / erlaubte Werte, sofern Nachweise in der Arbeitsmappe vorhanden sind
+  - dictionary-übergreifende SKOS-Links
+  - IFC-SSOT-Links
+  - QUDT-Unit-Links

@@ -1,51 +1,51 @@
-# Minimal DD publication vocabulary
+# Minimales DD-Publikationsvokabular
 
-Namespace proposal:
+Namespace-Vorschlag:
 
 - `dd: <https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/>`
 
-Purpose:
-A thin structural vocabulary for published data dictionaries. It does **not** replace IFC, QUDT, SKOS, DCAT, or PROV. It only expresses dictionary-internal publication structure.
+Zweck:
+Ein schlankes Strukturvokabular für publizierte Data Dictionaries. Es ersetzt **nicht** IFC, QUDT, SKOS, DCAT oder PROV. Es beschreibt nur die dictionary-interne Publikationsstruktur.
 
-## Classes
+## Klassen
 
 - `dd:DataDictionary`
-  - a published data dictionary
+  - ein publiziertes Data Dictionary
 - `dd:GroupOfProperties`
-  - a logical grouping / property set / GoP in the workbook
+  - eine logische Gruppierung / ein Property Set / eine GoP aus der Arbeitsmappe
 - `dd:AllowedValue`
-  - an allowed value / enumeration member published from the `Values` tab
+  - ein erlaubter Wert / ein Enumerationseintrag, publiziert aus dem Tab `Values`
 
 ## Properties
 
 - `dd:hasClass`
-  - dictionary -> class
+  - Dictionary -> Klasse
 - `dd:hasProperty`
-  - dictionary -> property OR class -> property depending on subject
+  - Dictionary -> Property oder Klasse -> Property, abhängig vom Subjekt
 - `dd:hasGroupOfProperties`
-  - dictionary -> group of properties
+  - Dictionary -> Group of Properties
 - `dd:hasAllowedValue`
-  - property -> allowed value
+  - Property -> erlaubter Wert
 - `dd:inGroupOfProperties`
-  - property -> group of properties
+  - Property -> Group of Properties
 - `dd:groupContainsProperty`
-  - group of properties -> property
+  - Group of Properties -> Property
 - `dd:valueOfProperty`
-  - allowed value -> property
+  - erlaubter Wert -> Property
 - `dd:alignedWithIfcPset`
-  - group/property -> IFC property set URI
+  - Gruppe/Property -> IFC-Property-Set-URI
 - `dd:alignedWithIfcPredefinedType`
-  - value -> IFC predefined type URI
+  - Wert -> IFC-Predefined-Type-URI
 - `dd:dictionaryRecord`
-  - semantic resource -> I14Y dataset/catalog record URI
+  - semantische Ressource -> I14Y-Dataset-/Katalogeintrag-URI
 
-## Alignment rules
+## Alignment-Regeln
 
-- Use `skos:exactMatch`, `skos:closeMatch`, `skos:broadMatch`, `skos:narrowMatch`, `skos:relatedMatch` for semantic mappings.
-- Use `qudt:hasUnit` for QUDT unit links.
-- Use `dcterms:source` / `prov:wasDerivedFrom` for provenance.
-- Use IFC URIs as SSOT anchors and never overwrite them.
+- `skos:exactMatch`, `skos:closeMatch`, `skos:broadMatch`, `skos:narrowMatch`, `skos:relatedMatch` für semantische Mappings verwenden.
+- `qudt:hasUnit` für QUDT-Unit-Links verwenden.
+- `dcterms:source` / `prov:wasDerivedFrom` für Provenienz verwenden.
+- IFC-URIs als SSOT-Anker verwenden und niemals überschreiben.
 
-## Design intent
+## Design-Absicht
 
-This vocabulary is intentionally minimal so a lightweight published DD remains easy to query while still being rich enough to validate against IFC-derived RDF graphs later.
+Dieses Vokabular ist bewusst minimal gehalten, damit ein schlank publiziertes Data Dictionary einfach abfragbar bleibt und dennoch ausreichend reichhaltig ist, um später gegen IFC-abgeleitete RDF-Graphen validiert werden zu können.

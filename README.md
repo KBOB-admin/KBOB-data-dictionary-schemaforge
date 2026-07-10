@@ -1,79 +1,84 @@
 # KBOB Data Dictionary SchemaForge
 
-Public-facing MVP pipeline for transforming validated KBOB data dictionary workbooks into:
-- RDF/Turtle aligned for LINDAS INT publication
-- an I14Y-oriented JSON bundle for catalog/import workflows
+Öffentliche MVP-Pipeline zur Transformation validierter KBOB-Data-Dictionary-Arbeitsmappen in:
 
-## Scope
+- RDF/Turtle, ausgerichtet auf eine Publikation in LINDAS INT
+- ein I14Y-orientiertes JSON-Bundle für Katalog- und Import-Workflows
 
-This repository is intentionally limited to the SchemaForge MVP publication path.
-It is not the validator repository and it is not the full historical authoring workspace.
+## Geltungsbereich
 
-Current MVP focus:
-- consume validated workbook inputs
-- preserve IFC 4.3, QUDT, SKOS, and provenance anchors
-- export RDF for LINDAS INT
-- export an I14Y-conform bundle for downstream publication work
+Dieses Repository ist bewusst auf den SchemaForge-MVP-Publikationspfad beschränkt.
+Es ist nicht das Validator-Repository und nicht der vollständige historische Autoren-Arbeitsbereich.
 
-## Expected inputs
+Aktueller MVP-Fokus:
 
-The active pipeline is currently exercised against validated workbook variants such as:
+- validierte Arbeitsmappen als Eingabe verwenden
+- IFC 4.3, QUDT, SKOS und Provenienz-Anker erhalten
+- RDF für LINDAS INT exportieren
+- ein I14Y-konformes Bundle für nachgelagerte Publikationsarbeiten exportieren
+
+## Erwartete Eingaben
+
+Die aktive Pipeline wird derzeit gegen validierte Arbeitsmappenvarianten ausgeführt, zum Beispiel:
+
 - `templates/Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx`
 - `templates/Data Dictionary_BdCH_AreaMgmt_v0.9.6.xlsx`
 
-Validated workbook generation and structural checks live in the separate validator repository.
+Die Erzeugung validierter Arbeitsmappen und die strukturellen Prüfungen liegen im separaten Validator-Repository.
 
-## Repository structure
+## Repository-Struktur
 
-- `scripts/` — active transformation and publication scripts
-- `docs/` — mapping notes and publication documentation
-- `external/` — reference specifications/templates required for reproducibility
-- `templates/` — workbook examples/templates used for pipeline work
-- `examples/` — minimal usage examples
-- `demo_queries/` — GraphDB/LINDAS query examples
+- `scripts/` - aktive Transformations- und Publikationsskripte
+- `docs/` - Mapping-Notizen und Publikationsdokumentation
+- `external/` - Referenzspezifikationen und Templates für Reproduzierbarkeit
+- `templates/` - Arbeitsmappenbeispiele und Templates für Pipeline-Arbeiten
+- `examples/` - minimale Nutzungsbeispiele
+- `demo_queries/` - GraphDB-/LINDAS-Abfragebeispiele
 
-## Reproducibility principles
+## Reproduzierbarkeitsprinzipien
 
-This public repository should contain only artefacts relevant for reproducibility.
-Local-only outputs and environments are excluded, including:
-- Python virtual environments
-- generated export output under `out/`
-- caches and `__pycache__`
-- editor-specific local settings
+Dieses öffentliche Repository soll nur Artefakte enthalten, die für die Reproduzierbarkeit relevant sind.
+Lokale Ausgaben und Umgebungen sind ausgeschlossen, insbesondere:
 
-## Core scripts
+- Python-Virtual-Environments
+- generierte Exportausgaben unter `out/`
+- Caches und `__pycache__`
+- editor-spezifische lokale Einstellungen
 
-- `scripts/map_to_rdf.py` — workbook to RDF/Turtle export
-- `scripts/export_i14y_json.py` — workbook to I14Y-oriented JSON bundle export
-- `scripts/publish_to_lindas.py` — dry-run or publish step for LINDAS INT/PROD
+## Zentrale Skripte
 
-## Usage
+- `scripts/map_to_rdf.py` - Export von Arbeitsmappe nach RDF/Turtle
+- `scripts/export_i14y_json.py` - Export von Arbeitsmappe nach I14Y-orientiertem JSON-Bundle
+- `scripts/publish_to_lindas.py` - Dry-Run- oder Publikationsschritt für LINDAS INT/PROD
 
-### RDF export
+## Nutzung
+
+### RDF-Export
 
 ```bash
 python scripts/map_to_rdf.py <kbob-workbook.xlsx> <areamgmt-workbook.xlsx> --out out/schemaforge-smoke
 ```
 
-### I14Y bundle export
+### I14Y-Bundle-Export
 
 ```bash
 python scripts/export_i14y_json.py <kbob-workbook.xlsx> <areamgmt-workbook.xlsx> --out out/schemaforge-smoke/i14y_bundle.json
 ```
 
-### LINDAS publish (dry-run by default)
+### LINDAS-Publikation (standardmässig Dry-Run)
 
 ```bash
 python scripts/publish_to_lindas.py --ttl out/combined.ttl
 ```
 
-Real publication requires explicit `--publish` and local-only credentials.
-The script supports either:
-- a local uncommitted `external/lindas.ini`, or
-- interactive prompting / environment variables for credentials and graph settings.
+Eine echte Publikation erfordert explizit `--publish` und lokale Zugangsdaten.
+Das Skript unterstützt entweder:
 
-## Notes
+- eine lokale, nicht committete Datei `external/lindas.ini`, oder
+- interaktive Eingabe beziehungsweise Umgebungsvariablen für Zugangsdaten und Graph-Einstellungen.
 
-- Paths inside active scripts are repo-relative, not user-home absolute.
-- Publication is disabled by default and should remain dry-run unless credentials/config are intentionally provided.
-- This repository is public-facing but not automatically live; publication remains an explicit step.
+## Hinweise
+
+- Pfade in den aktiven Skripten sind repository-relativ, nicht absolut auf ein Benutzerverzeichnis bezogen.
+- Publikation ist standardmässig deaktiviert und soll Dry-Run bleiben, sofern Zugangsdaten und Konfiguration nicht bewusst bereitgestellt werden.
+- Dieses Repository ist öffentlich nutzbar, aber nicht automatisch live geschaltet; Publikation bleibt ein expliziter Schritt.

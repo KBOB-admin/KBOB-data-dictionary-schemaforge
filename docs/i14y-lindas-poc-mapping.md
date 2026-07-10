@@ -1,57 +1,59 @@
-# I14Y + LINDAS PoC mapping
+# I14Y- und LINDAS-PoC-Mapping
 
-## Purpose split
+## Zwecktrennung
 
-- **I14Y**: metadata catalogue / registry for discoverability, governance, and API-based publication records.
-- **LINDAS**: authoritative linked-data publication target with dereferenceable IRIs and RDF.
+- **I14Y**: Metadatenkatalog / Registry für Auffindbarkeit, Governance und API-basierte Publikationsdatensätze.
+- **LINDAS**: autoritatives Linked-Data-Publikationsziel mit dereferenzierbaren IRIs und RDF.
 
-## API spec source
+## Quelle der API-Spezifikation
 
-OpenAPI files were extracted from `I14Y-ch/apiconsole`:
+OpenAPI-Dateien wurden aus `I14Y-ch/apiconsole` extrahiert:
 
 - `external/apiconsole__partner__v1__Release.json`
 - `external/apiconsole__public__v1__Release.json`
 - `external/apiconsole__partner__v1__configUrl.json`
 - `external/apiconsole__public__v1__configUrl.json`
 
-Important partner endpoints identified:
+Wichtige identifizierte Partner-Endpunkte:
 
-- `POST /datasets` → `DcatDatasetInputModelDataWrapper`
-- `POST /concepts` → `ConceptInputBaseDataWrapper`
+- `POST /datasets` -> `DcatDatasetInputModelDataWrapper`
+- `POST /concepts` -> `ConceptInputBaseDataWrapper`
 - `POST /concepts/{conceptId}/codelist-entries/imports/{dataFormat}`
 - `POST /catalogs/{catalogId}/records`
 
-ABN / integration server from spec:
+ABN-/Integrationsserver gemäss Spezifikation:
 
 - `https://api-a.i14y.admin.ch/api/partner/v1/`
 
-PROD server from spec:
+PROD-Server gemäss Spezifikation:
 
 - `https://api.i14y.admin.ch/api/partner/v1/`
 
-## Required partner payload fields
+## Erforderliche Partner-Payload-Felder
 
 ### Dataset (`DcatDatasetInputModel`)
-Required by spec:
+
+Gemäss Spezifikation erforderlich:
 
 - `accessRights`
 - `description`
 - `publisher`
 - `title`
 
-Current PoC mapping:
+Aktuelles PoC-Mapping:
 
-- `title` ← inferred workbook title / `Dictionary_public` title fields if present
-- `description` ← `Dictionary_public` description fields, fallback generated text
-- `publisher.identifier` ← `Dictionary_public[Owner / Publisher]` or inferred org id (`kbob` / `bdch`)
-- `accessRights.code` ← `Dictionary_public[AccessRights]` or fallback `public`
-- `issued` / `modified` ← `ReleaseDate` / `ModifiedDate`
-- `conformsTo` ← ISO 23386 / optional DCAT-AP CH links
-- `landingPages` ← fallback I14Y dataset URI plus optional `MoreInfoUrl`
-- `relations` / `documentation` ← optional URL lists from `Dictionary_public`
+- `title` <- abgeleiteter Arbeitsmappentitel / Titel-Felder aus `Dictionary_public`, sofern vorhanden
+- `description` <- Beschreibungsfelder aus `Dictionary_public`, Fallback: generierter Text
+- `publisher.identifier` <- `Dictionary_public[Owner / Publisher]` oder abgeleitete Organisations-ID (`kbob` / `bdch`)
+- `accessRights.code` <- `Dictionary_public[AccessRights]` oder Fallback `public`
+- `issued` / `modified` <- `ReleaseDate` / `ModifiedDate`
+- `conformsTo` <- ISO 23386 / optionale DCAT-AP-CH-Links
+- `landingPages` <- Fallback-I14Y-Dataset-URI plus optional `MoreInfoUrl`
+- `relations` / `documentation` <- optionale URL-Listen aus `Dictionary_public`
 
-### Concept (`ConceptInputBase` + specific subtype)
-Required by spec:
+### Concept (`ConceptInputBase` + spezifischer Subtyp)
+
+Gemäss Spezifikation erforderlich:
 
 - `description`
 - `name`
@@ -59,89 +61,89 @@ Required by spec:
 - `responsiblePerson`
 - `version`
 
-Current PoC mapping:
+Aktuelles PoC-Mapping:
 
-- **Classes** → exported as `String` concepts
-- **Properties** → exported as:
-  - `CodeList` when enumeration values are present
-  - `Numeric` for numeric / measure datatypes
-  - `String` otherwise
-- `name` ← multilingual labels from workbook
-- `description` ← multilingual definitions from workbook
-- `publisher.identifier` ← same publisher as dataset
-- `responsiblePerson.email` ← `ContactEmail` or placeholder until real value exists
-- `version` ← workbook `Version date` or fallback `0.1.0`
-- `identifiers` ← workbook code + authoritative LINDAS URI
+- **Classes** -> Export als `String`-Concepts
+- **Properties** -> Export als:
+  - `CodeList`, wenn Enumerationswerte vorhanden sind
+  - `Numeric` für numerische Datentypen / Messgrössen
+  - sonst `String`
+- `name` <- mehrsprachige Labels aus der Arbeitsmappe
+- `description` <- mehrsprachige Definitionen aus der Arbeitsmappe
+- `publisher.identifier` <- gleicher Publisher wie beim Dataset
+- `responsiblePerson.email` <- `ContactEmail` oder Platzhalter, bis ein realer Wert vorhanden ist
+- `version` <- `Version date` der Arbeitsmappe oder Fallback `0.1.0`
+- `identifiers` <- Arbeitsmappen-Code + autoritative LINDAS-URI
 
-## Semantic anchors that must never be lost
+## Semantische Anker, die niemals verloren gehen dürfen
 
-These are preserved in both generated artifacts:
+Diese Anker werden in beiden generierten Artefakten erhalten:
 
-### IFC SSOT pointers
+### IFC-SSOT-Verweise
 
-Workbook columns:
+Arbeitsmappen-Spalten:
 
 - Classes: `IFC_URI`, `IfcObject Entity`, `IfcTypeObject Entity`, `PredefinedType`
 - Properties: `IFC_URI`, `IfcPropertySet (Pset) / IfcQuantitySet (Qto)`
 
-PoC handling:
+PoC-Behandlung:
 
-- In **I14Y JSON**, IFC URIs are preserved in `conformsTo[]` as resource links.
-- In **LINDAS RDF**, IFC URIs are preserved as `skos:exactMatch` links.
-- IFC entity / predefined-type information is preserved as RDF comments.
+- In **I14Y JSON** werden IFC-URIs in `conformsTo[]` als Ressourcen-Links erhalten.
+- In **LINDAS RDF** werden IFC-URIs als `skos:exactMatch`-Links erhalten.
+- IFC-Entity- und Predefined-Type-Informationen werden als RDF-Kommentare erhalten.
 
-### QUDT unit SSOT pointers
+### QUDT-Unit-SSOT-Verweise
 
-Workbook columns:
+Arbeitsmappen-Spalten:
 
-- Properties: `QUDT URI`, `Unit Name (EN)` and local-language unit labels
+- Properties: `QUDT URI`, `Unit Name (EN)` und lokale Sprachlabels für Einheiten
 
-PoC handling:
+PoC-Behandlung:
 
-- In **I14Y JSON**, QUDT URIs are preserved in `conformsTo[]`.
-- In **LINDAS RDF**, QUDT URIs are preserved via `qudt:hasUnit`.
+- In **I14Y JSON** werden QUDT-URIs in `conformsTo[]` erhalten.
+- In **LINDAS RDF** werden QUDT-URIs über `qudt:hasUnit` erhalten.
 
-### SKOS ConceptRelation anchors
+### SKOS-ConceptRelation-Anker
 
-Workbook sheet:
+Arbeitsmappen-Tab:
 
 - `ConceptRelation`
 
-PoC handling:
+PoC-Behandlung:
 
-- In **I14Y bundle**, relations are preserved in top-level `semantic.skosRelations`.
-- In **LINDAS RDF**, relations are emitted directly using the declared SKOS predicate (`skos:exactMatch`, `skos:broadMatch`, etc.).
+- Im **I14Y-Bundle** werden Relationen unter `semantic.skosRelations` auf oberster Ebene erhalten.
+- In **LINDAS RDF** werden Relationen direkt mit dem deklarierten SKOS-Prädikat ausgegeben (`skos:exactMatch`, `skos:broadMatch` usw.).
 
-## Cross-link strategy
+## Cross-Link-Strategie
 
-### I14Y → LINDAS
+### I14Y -> LINDAS
 
-Each concept payload keeps the authoritative LINDAS URI in:
+Jeder Concept-Payload behält die autoritative LINDAS-URI in:
 
 - `identifiers[]`
-- `conformsTo[]` as `LINDAS authoritative ... IRI`
+- `conformsTo[]` als `LINDAS authoritative ... IRI`
 
-### LINDAS → I14Y
+### LINDAS -> I14Y
 
-Each RDF resource includes provenance links back to the I14Y dataset URI:
+Jede RDF-Ressource enthält Provenienz-Links zurück zur I14Y-Dataset-URI:
 
 - `dcterms:source`
 - `prov:wasDerivedFrom`
 
-Dataset URI pattern currently used in PoC:
+Aktuell im PoC verwendetes Dataset-URI-Muster:
 
 - `https://i14y.admin.ch/catalog/<slug-of-workbook>`
 
-This is a placeholder until the real I14Y created dataset/record URI is known.
+Dies ist ein Platzhalter, bis die reale von I14Y erzeugte Dataset-/Record-URI bekannt ist.
 
-## Current generated artifacts
+## Aktuelle generierte Artefakte
 
-- I14Y bundle: `out/i14y_bundle.json`
-- LINDAS RDF bundle: `out/combined.ttl`
+- I14Y-Bundle: `out/i14y_bundle.json`
+- LINDAS-RDF-Bundle: `out/combined.ttl`
 
-## Notes / remaining gaps
+## Hinweise / verbleibende Lücken
 
-- Real I14Y publisher is not yet implemented against the live Partner API.
-- `responsiblePerson.email` currently falls back to `placeholder@example.org` if not present.
-- Code list entry import is not yet pushed to the dedicated I14Y endpoint; entries are preserved in the bundle under `codeListEntries`.
-- Once real I14Y record URIs are available after POST, the bundle should be updated so RDF provenance references the created record instead of the placeholder pattern.
+- Der reale I14Y-Publisher ist noch nicht gegen die Live-Partner-API implementiert.
+- `responsiblePerson.email` fällt derzeit auf `placeholder@example.org` zurück, falls kein Wert vorhanden ist.
+- Der Code-List-Entry-Import wird noch nicht an den dedizierten I14Y-Endpunkt gepusht; Einträge bleiben im Bundle unter `codeListEntries` erhalten.
+- Sobald nach einem POST reale I14Y-Record-URIs verfügbar sind, sollte das Bundle aktualisiert werden, damit RDF-Provenienz auf den erzeugten Record statt auf das Platzhaltermuster verweist.

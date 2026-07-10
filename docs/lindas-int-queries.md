@@ -1,18 +1,18 @@
-# LINDAS INT access examples for the PoC
+# LINDAS-INT-Zugriffsbeispiele für den PoC
 
-Graph namespace used by the PoC:
+Vom PoC verwendeter Graph-Namespace:
 
 - `<https://lindas.admin.ch/fobl/kbob/dd-fm>`
 
-## 1) pyLINDAS / Python access
+## 1. pyLINDAS- / Python-Zugriff
 
-Run after publication:
+Nach der Publikation ausführen:
 
 ```bash
 python examples/pylindas_query_example.py
 ```
 
-## 2) SPARQL query (direct)
+## 2. SPARQL-Abfrage (direkt)
 
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -30,9 +30,9 @@ WHERE {
 LIMIT 50
 ```
 
-## 3) Third access channel: HTTP content negotiation / dereferencing
+## 3. Dritter Zugriffskanal: HTTP-Content-Negotiation / Dereferenzierung
 
-Example using curl against a concrete resource IRI after publication:
+Beispiel mit `curl` gegen eine konkrete Ressourcen-IRI nach der Publikation:
 
 ```bash
 curl -L \
@@ -40,7 +40,7 @@ curl -L \
   'https://lindas.admin.ch/fobl/kbob/dd-fm/class/class/room-(ai)'
 ```
 
-Alternative graph-level SPARQL-over-HTTP:
+Alternative Graph-Level-Abfrage über SPARQL-over-HTTP:
 
 ```bash
 curl -G 'https://int.lindas.admin.ch/query' \
@@ -48,9 +48,9 @@ curl -G 'https://int.lindas.admin.ch/query' \
   -H 'Accept: application/sparql-results+json'
 ```
 
-## Recommended demo queries
+## Empfohlene Demo-Abfragen
 
-### Classes in the dictionary
+### Klassen im Dictionary
 
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -64,7 +64,7 @@ WHERE {
 LIMIT 50
 ```
 
-### Properties with QUDT units
+### Properties mit QUDT-Einheiten
 
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -79,7 +79,7 @@ WHERE {
 LIMIT 50
 ```
 
-### Cross-dictionary SKOS links
+### Dictionary-übergreifende SKOS-Links
 
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
