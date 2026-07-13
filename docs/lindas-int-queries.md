@@ -92,3 +92,30 @@ WHERE {
 }
 LIMIT 100
 ```
+
+### Konzepte zu einer generischen IFC-Klasse
+
+Diese Abfrage benötigt nur den IFC-Klassennamen, z. B. `IfcSpace`. Sie findet
+Konzepte, die direkt auf die IFC-Klasse zeigen oder über einen spezifischeren
+IFC-PredefinedType wie `IfcSpaceGFA` auf die Basisklasse zurückverlinkt sind.
+
+```sparql
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dd: <https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/>
+
+SELECT DISTINCT ?concept ?label
+WHERE {
+  BIND("IfcSpace" AS ?ifcClassName)
+  BIND(IRI(CONCAT("https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/", ?ifcClassName)) AS ?ifcClass)
+
+  GRAPH <https://lindas.admin.ch/fobl/kbob/dd-fm> {
+    ?concept (skos:exactMatch|skos:broadMatch|dd:ifcObjectEntity) ?ifcClass .
+    OPTIONAL {
+      ?concept rdfs:label ?label .
+      FILTER(lang(?label) = "en")
+    }
+  }
+}
+ORDER BY ?concept
+```

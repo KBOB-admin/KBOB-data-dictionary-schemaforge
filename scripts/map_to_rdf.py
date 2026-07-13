@@ -7,6 +7,7 @@ import argparse, re
 
 LINDAS_BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm'
 BDCH = 'bdch'
+IFC_CLASS_BASE = 'https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class'
 QUDT = Namespace('http://qudt.org/schema/qudt/')
 PROV = Namespace('http://www.w3.org/ns/prov#')
 DD = Namespace('https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/')
@@ -75,6 +76,31 @@ def mint_from_id(base, subpath, identifier):
     return URIRef(f"{base}/{subpath}/{slug(identifier)}")
 
 
+def normalize_predefined_type(value):
+    if value in (None, ''):
+        return ''
+    return str(value).strip().replace(' ', '').replace('-', '_').upper()
+
+
+def ifc_base_class_uri(ifc_entity):
+    entity = str(ifc_entity or '').strip()
+    if not entity:
+        return None
+    if not entity.startswith('Ifc'):
+        raise ValueError(f'IfcObject Entity must start with Ifc: {entity}')
+    return URIRef(f'{IFC_CLASS_BASE}/{entity}')
+
+
+def ifc_predefined_class_uri(ifc_entity, predefined_type):
+    entity = str(ifc_entity or '').strip()
+    predefined = normalize_predefined_type(predefined_type)
+    if not entity or not predefined or predefined == 'USERDEFINED':
+        return None
+    if predefined.startswith('Ifc'):
+        return URIRef(f'{IFC_CLASS_BASE}/{predefined}')
+    return URIRef(f'{IFC_CLASS_BASE}/{entity}{predefined}')
+
+
 def dataset_uri_for_workbook(path):
     return URIRef(f"https://i14y.admin.ch/catalog/{slug(Path(path).stem)}")
 
@@ -106,6 +132,22 @@ def add_resource_links(g, uri, dataset_uri, ifc_uri=None, qudt_uri=None, doc_uri
         g.add((uri, QUDT.hasUnit, URIRef(str(qudt_uri))))
     if doc_uri:
         g.add((uri, RDFS.seeAlso, URIRef(str(doc_uri))))
+
+
+def add_ifc_class_alignment(g, uri, row):
+    base_ifc_uri = ifc_base_class_uri(row.get('IfcObject Entity'))
+    predefined_ifc_uri = ifc_predefined_class_uri(row.get('IfcObject Entity'), row.get('PredefinedType'))
+    if base_ifc_uri is None:
+        if row.get('IFC_URI'):
+            g.add((uri, SKOS.exactMatch, URIRef(str(row.get('IFC_URI')))))
+        return
+    g.add((uri, DD.ifcObjectEntity, base_ifc_uri))
+    if predefined_ifc_uri is None:
+        g.add((uri, SKOS.exactMatch, base_ifc_uri))
+        return
+    g.add((uri, SKOS.exactMatch, predefined_ifc_uri))
+    g.add((uri, SKOS.broadMatch, base_ifc_uri))
+    g.add((uri, DD.ifcPredefinedType, predefined_ifc_uri))
 
 
 def main(argv=None):
@@ -156,7 +198,8 @@ def main(argv=None):
                 g.add((uri, SKOS.definition, Literal(str(c.get('Beschreibung (DE)')), lang='de')))
             if c.get('Description (EN)'):
                 g.add((uri, SKOS.definition, Literal(str(c.get('Description (EN)')), lang='en')))
-            add_resource_links(g, uri, dataset_uri, ifc_uri=c.get('IFC_URI'))
+            add_resource_links(g, uri, dataset_uri)
+            add_ifc_class_alignment(g, uri, c)
             # preserve IFC entity details as labels/comments
             if c.get('IfcObject Entity'):
                 g.add((uri, RDFS.comment, Literal(f"IFC entity: {c.get('IfcObject Entity')}")))
