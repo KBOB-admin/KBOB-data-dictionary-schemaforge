@@ -30,7 +30,7 @@ def ensure_local_config(config: Path, environment: str, graph: str) -> Path:
     username = os.environ.get('LINDAS_USERNAME') or input('LINDAS username/token: ').strip()
     password = os.environ.get('LINDAS_PASSWORD') or getpass.getpass('LINDAS password/token: ')
     endpoint = os.environ.get('LINDAS_ENDPOINT') or ('https://int.lindas.admin.ch' if environment.upper() == 'INT' else 'https://lindas.admin.ch')
-    cp = configparser.ConfigParser()
+    cp = configparser.RawConfigParser()
     cp[environment.upper()] = {
         'endpoint': endpoint,
         'username': username,
@@ -43,24 +43,37 @@ def ensure_local_config(config: Path, environment: str, graph: str) -> Path:
     return config
 
 
+def read_config_graph(config: Path, environment: str) -> str | None:
+    if not config.exists():
+        return None
+    cp = configparser.RawConfigParser()
+    cp.read(config)
+    section = environment.upper()
+    if not cp.has_section(section) or not cp.has_option(section, 'graph'):
+        return None
+    value = cp.get(section, 'graph').strip()
+    return value or None
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('--ttl', default=str(DEFAULT_TTL))
     ap.add_argument('--config', default=str(DEFAULT_CONFIG))
     ap.add_argument('--environment', default=os.environ.get('LINDAS_ENVIRONMENT', 'INT'))
-    ap.add_argument('--graph', default=os.environ.get('LINDAS_GRAPH', DEFAULT_GRAPH))
+    ap.add_argument('--graph')
     ap.add_argument('--clear-graph', action='store_true')
     ap.add_argument('--publish', action='store_true')
     args = ap.parse_args(argv)
 
     ttl = Path(args.ttl)
     config = Path(args.config)
+    graph = args.graph or os.environ.get('LINDAS_GRAPH') or read_config_graph(config, args.environment) or DEFAULT_GRAPH
     if not ttl.exists():
         raise SystemExit(f'TTL file not found: {ttl}')
 
     print('TTL:', ttl)
     print('Environment:', args.environment)
-    print('Graph:', args.graph)
+    print('Graph:', graph)
     print('Config:', config)
     print('Clear graph:', args.clear_graph)
 
@@ -72,8 +85,8 @@ def main(argv=None):
     if upload_ttl is None:
         raise SystemExit('pylindas is not installed. Install it locally before running --publish.')
 
-    config = ensure_local_config(config, args.environment, args.graph)
-    upload_ttl(str(ttl), str(config), args.environment, args.graph, clear_graph=args.clear_graph)
+    config = ensure_local_config(config, args.environment, graph)
+    upload_ttl(str(ttl), str(config), args.environment, graph, clear_graph=args.clear_graph)
     print('Publish complete.')
     return 0
 

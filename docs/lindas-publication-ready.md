@@ -8,14 +8,14 @@ Für eine sofortige Publikation sollten nur noch diese Schritte nötig sein:
 
 Entweder:
 
-- `external/lindas.ini.template` nach `external/lindas.ini` kopieren und den Abschnitt `INT` lokal ausfüllen, oder
+- `external/lindas.ini.template` nach `external/lindas.ini` kopieren und den Abschnitt `INT` lokal mit Endpoint, Graph, Benutzername/Token und Passwort/Token ausfüllen, oder
 - `scripts/publish_to_lindas.py` bei Verwendung von `--publish` interaktiv nach Benutzername/Token, Passwort/Token und Graph fragen lassen.
 
 Die reale Datei `external/lindas.ini` muss lokal bleiben und darf nicht committet werden.
 
 Für eine skalierbare Organisations-Pipeline ist die empfohlene Trennung:
 
-- **Lokaler Testlauf:** `external/lindas.ini` verwenden. Diese Datei ist lokal, nicht versioniert und dient nur zum manuellen Publikationstest.
+- **Lokaler Testlauf:** `external/lindas.ini` verwenden. Diese Datei ist lokal, nicht versioniert und enthält auch den organisationsspezifischen Graph-Namespace.
 - **Wiederholbare Pipeline / GitHub Actions / CI:** Zugangsdaten und Graph-Parameter als Secrets bzw. Umgebungsvariablen bereitstellen (`LINDAS_USERNAME`, `LINDAS_PASSWORD`, `LINDAS_ENDPOINT`, `LINDAS_GRAPH`). Keine Organisation sollte Zugangsdaten in Excel-Dateien, RDF-Artefakte oder Git-Repositories schreiben.
 - **Pro Organisation:** Data-Dictionary-Arbeitsmappe ausfüllen, Graph-Namespace und Zugangsdaten beim Bundesarchiv / LINDAS-Betrieb beantragen, validieren, RDF erzeugen, dann mit organisationsspezifischem Graph publizieren.
 - **Semantische Verknüpfung:** Die mandatorischen IFC-Anker bleiben im RDF erhalten und dienen als stabiler gemeinsamer Bezugspunkt, um mehrere Data Dictionaries über LINDAS hinweg vergleichbar und mappbar zu machen.
@@ -26,7 +26,6 @@ Für eine skalierbare Organisations-Pipeline ist die empfohlene Trennung:
 python scripts/publish_to_lindas.py \
   --config external/lindas.ini \
   --environment INT \
-  --graph https://lindas.admin.ch/fobl/kbob/dd-fm \
   --publish
 ```
 
@@ -36,7 +35,6 @@ Optionaler vollständiger Refresh:
 python scripts/publish_to_lindas.py \
   --config external/lindas.ini \
   --environment INT \
-  --graph https://lindas.admin.ch/fobl/kbob/dd-fm \
   --clear-graph \
   --publish
 ```
@@ -55,7 +53,7 @@ Jetzt vorbereitet:
 ## Hinweise
 
 - Aktuelles Graph-Artefakt: `out/combined.ttl`
-- Aktueller Graph-Namespace: `https://lindas.admin.ch/fobl/kbob/dd-fm`
+- Aktueller Beispiel-Graph-Namespace: `https://lindas.admin.ch/fobl/kbob/dd-fm`
 - Das aktuelle Publikationsmodell umfasst:
   - Klassen
   - Properties

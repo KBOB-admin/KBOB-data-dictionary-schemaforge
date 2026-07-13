@@ -3,10 +3,12 @@
 
 [INT]
 endpoint = https://int.lindas.admin.ch
+graph = https://lindas.admin.ch/fobl/kbob/dd-fm
 username = __TOKEN_OR_USER__
 password = __TOKEN_OR_PASSWORD__
 
 [PROD]
 endpoint = https://lindas.admin.ch
+graph = https://lindas.admin.ch/fobl/kbob/dd-fm
 username = __TOKEN_OR_USER__
 password = __TOKEN_OR_PASSWORD__
