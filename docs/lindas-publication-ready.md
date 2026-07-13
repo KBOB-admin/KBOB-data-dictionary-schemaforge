@@ -13,6 +13,13 @@ Entweder:
 
 Die reale Datei `external/lindas.ini` muss lokal bleiben und darf nicht committet werden.
 
+Für eine skalierbare Organisations-Pipeline ist die empfohlene Trennung:
+
+- **Lokaler Testlauf:** `external/lindas.ini` verwenden. Diese Datei ist lokal, nicht versioniert und dient nur zum manuellen Publikationstest.
+- **Wiederholbare Pipeline / GitHub Actions / CI:** Zugangsdaten und Graph-Parameter als Secrets bzw. Umgebungsvariablen bereitstellen (`LINDAS_USERNAME`, `LINDAS_PASSWORD`, `LINDAS_ENDPOINT`, `LINDAS_GRAPH`). Keine Organisation sollte Zugangsdaten in Excel-Dateien, RDF-Artefakte oder Git-Repositories schreiben.
+- **Pro Organisation:** Data-Dictionary-Arbeitsmappe ausfüllen, Graph-Namespace und Zugangsdaten beim Bundesarchiv / LINDAS-Betrieb beantragen, validieren, RDF erzeugen, dann mit organisationsspezifischem Graph publizieren.
+- **Semantische Verknüpfung:** Die mandatorischen IFC-Anker bleiben im RDF erhalten und dienen als stabiler gemeinsamer Bezugspunkt, um mehrere Data Dictionaries über LINDAS hinweg vergleichbar und mappbar zu machen.
+
 ## 2. Nach INT publizieren
 
 ```bash

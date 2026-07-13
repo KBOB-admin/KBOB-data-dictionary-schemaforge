@@ -13,6 +13,7 @@ __pycache__/
 .vscode/
 external/*__backup.json
 external/*__.vscode__*.json
+external/lindas.ini
 
 # OS noise
 .DS_Store

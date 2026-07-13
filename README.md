@@ -25,7 +25,7 @@ Aktueller Fokus:
 Die aktive Pipeline wird derzeit gegen validierte Arbeitsmappenvarianten ausgeführt, zum Beispiel:
 
 - `templates/Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx`
-- `templates/Data Dictionary_BdCH_AreaMgmt_v0.9.6.xlsx`
+- `templates/Strukturvorlage_AreaMgmt_v0.5.0.xlsx`
 
 Die Erzeugung validierter Arbeitsmappen, die strukturellen Prüfungen und die validatorseitigen Rückschreibungen liegen im Repository [`KBOB-data-dictionary`](https://github.com/KBOB-admin/KBOB-data-dictionary).
 
