@@ -1,14 +1,21 @@
-; Copy this file to lindas.ini and fill in the token/credentials tomorrow.
-; pylindas uses Stardog connection settings.
+; Copy this file to lindas.ini and fill in local credentials.
+; GraphDB / LINDASNext publication uses gsp_endpoint + graph + Basic Auth.
+; endpoint is retained only for the legacy pyLINDAS/Stardog path.
 
 [INT]
 endpoint = https://int.lindas.admin.ch
+query_endpoint = https://int.graphdb.lindas.admin.ch/repositories/lindas
+update_endpoint = https://int.graphdb.lindas.admin.ch/repositories/lindas/statements
+gsp_endpoint = https://int.graphdb.lindas.admin.ch/repositories/lindas/rdf-graphs/service
 graph = https://lindas.admin.ch/fobl/kbob/dd-fm
 username = __TOKEN_OR_USER__
 password = __TOKEN_OR_PASSWORD__
 
 [PROD]
 endpoint = https://lindas.admin.ch
+query_endpoint = https://graphdb.lindas.admin.ch/repositories/lindas
+update_endpoint = https://graphdb.lindas.admin.ch/repositories/lindas/statements
+gsp_endpoint = https://graphdb.lindas.admin.ch/repositories/lindas/rdf-graphs/service
 graph = https://lindas.admin.ch/fobl/kbob/dd-fm
 username = __TOKEN_OR_USER__
 password = __TOKEN_OR_PASSWORD__

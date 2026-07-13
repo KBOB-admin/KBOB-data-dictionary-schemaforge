@@ -52,7 +52,8 @@ Lokale Ausgaben und Umgebungen sind ausgeschlossen, insbesondere:
 
 - `scripts/map_to_rdf.py` - Export von Arbeitsmappe nach RDF/Turtle
 - `scripts/export_i14y_json.py` - Export von Arbeitsmappe nach I14Y-orientiertem JSON-Bundle
-- `scripts/publish_to_lindas.py` - Dry-Run- oder Publikationsschritt für LINDAS INT/PROD
+- `scripts/publish_to_lindas_graphdb.py` - Dry-Run- oder Publikationsschritt für LINDASNext / GraphDB über Graph Store Protocol
+- `scripts/publish_to_lindas.py` - Legacy-Dry-Run-/Publikationspfad für ältere pyLINDAS/Stardog-Setups
 
 ## Nutzung
 
@@ -71,7 +72,7 @@ python scripts/export_i14y_json.py <kbob-workbook.xlsx> <areamgmt-workbook.xlsx>
 ### LINDAS-Publikation (standardmässig Dry-Run)
 
 ```bash
-python scripts/publish_to_lindas.py --ttl out/combined.ttl
+python scripts/publish_to_lindas_graphdb.py --ttl out/combined.ttl --config external/lindas.ini --environment INT
 ```
 
 Eine echte Publikation erfordert explizit `--publish` und lokale Zugangsdaten.
@@ -79,6 +80,17 @@ Das Skript unterstützt entweder:
 
 - eine lokale, nicht committete Datei `external/lindas.ini`, oder
 - interaktive Eingabe beziehungsweise Umgebungsvariablen für Zugangsdaten und Graph-Einstellungen.
+
+Die erste kontrollierte INT-Publikation sollte ohne Graph-Löschung als Append laufen:
+
+```bash
+python scripts/publish_to_lindas_graphdb.py \
+  --ttl out/combined.ttl \
+  --config external/lindas.ini \
+  --environment INT \
+  --operation append \
+  --publish
+```
 
 ## Hinweise
 

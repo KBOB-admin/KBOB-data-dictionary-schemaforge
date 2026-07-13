@@ -23,21 +23,26 @@ Für eine skalierbare Organisations-Pipeline ist die empfohlene Trennung:
 ## 2. Nach INT publizieren
 
 ```bash
-python scripts/publish_to_lindas.py \
+python scripts/publish_to_lindas_graphdb.py \
   --config external/lindas.ini \
   --environment INT \
+  --operation append \
   --publish
 ```
 
-Optionaler vollständiger Refresh:
+Dieser Befehl verwendet den in `external/lindas.ini` gesetzten `gsp_endpoint` und `graph`-Wert.
+
+Optionaler vollständiger Replace der benannten Graph-Daten:
 
 ```bash
-python scripts/publish_to_lindas.py \
+python scripts/publish_to_lindas_graphdb.py \
   --config external/lindas.ini \
   --environment INT \
-  --clear-graph \
+  --operation replace \
   --publish
 ```
+
+`append` verwendet HTTP `POST` gegen Graph Store Protocol. `replace` verwendet HTTP `PUT` und ersetzt den benannten Graph. `delete` ist ebenfalls verfügbar, sollte aber nur nach expliziter Freigabe verwendet werden.
 
 ## 3. Abfragekanäle sind vorbereitet
 
@@ -54,6 +59,7 @@ Jetzt vorbereitet:
 
 - Aktuelles Graph-Artefakt: `out/combined.ttl`
 - Aktueller Beispiel-Graph-Namespace: `https://lindas.admin.ch/fobl/kbob/dd-fm`
+- Aktueller INT Graph Store Protocol Endpoint: `https://int.graphdb.lindas.admin.ch/repositories/lindas/rdf-graphs/service`
 - Das aktuelle Publikationsmodell umfasst:
   - Klassen
   - Properties
