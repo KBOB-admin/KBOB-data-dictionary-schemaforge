@@ -37,7 +37,7 @@ Beispiel mit `curl` gegen eine konkrete Ressourcen-IRI nach der Publikation:
 ```bash
 curl -L \
   -H 'Accept: text/turtle' \
-  'https://lindas.admin.ch/fobl/kbob/dd-fm/class/class/room-(ai)'
+  'https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/classes/room'
 ```
 
 Alternative Graph-Level-Abfrage über SPARQL-over-HTTP:

@@ -101,6 +101,21 @@ def first_nonempty(*vals):
     return None
 
 
+def require_id(row: dict, column: str, sheet_name: str) -> str:
+    value = str(row.get(column) or '').strip()
+    if not value:
+        row_no = row.get('_row', '?')
+        raise ValueError(f'{sheet_name} row {row_no} is missing required system identifier {column}')
+    return value
+
+
+def owned_uri(base: str, subpath: str, identifier: str) -> str:
+    identifier = str(identifier or '').strip()
+    if not identifier:
+        raise ValueError(f'Cannot mint {subpath} URI without an identifier')
+    return f'{base}/{subpath}/{slug(identifier)}'
+
+
 @dataclass
 class WorkbookContext:
     path: Path
@@ -112,6 +127,7 @@ class WorkbookContext:
     release_date: str | None
     modified_date: str | None
     metadata: dict[str, Any]
+    lindas_graph: str
     lindas_base: str
     dataset_identifier: str
     dataset_uri: str
@@ -149,10 +165,11 @@ def infer_context(path: Path) -> WorkbookContext:
     version = first_nonempty(meta.get('Version'), '0.1.0')
     release_date = parse_date(meta.get('ReleaseDate'))
     modified_date = parse_date(meta.get('ModifiedDate')) or release_date
-    lindas_base = 'https://lindas.admin.ch/fobl/kbob/dd-fm'
+    lindas_graph = 'https://lindas.admin.ch/fobl/kbob/dd-fm'
+    lindas_base = f'{lindas_graph}/bdch' if publisher == 'bdch' else lindas_graph
     dataset_identifier = slug(name)
     dataset_uri = f'https://i14y.admin.ch/catalog/{dataset_identifier}'
-    return WorkbookContext(path, wb, title, publisher, contact_email, version, release_date, modified_date, meta, lindas_base, dataset_identifier, dataset_uri)
+    return WorkbookContext(path, wb, title, publisher, contact_email, version, release_date, modified_date, meta, lindas_graph, lindas_base, dataset_identifier, dataset_uri)
 
 
 def rowdict(ws, header_row=1, data_start=8):
@@ -267,7 +284,8 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
     concepts = []
     semantic_index = []
     for c in classes:
-        owned = first_nonempty(c.get('GUID/URI'), f"{ctx.lindas_base}/class/class/{slug(c.get('Designation (EN)') or c.get('Bezeichnung (DE)') or c.get('Class-Code'))}")
+        class_id = require_id(c, 'Class-ID', 'Classes')
+        owned = owned_uri(ctx.lindas_base, 'classes', class_id)
         payload = {
             'data': {
                 'conceptType': 'String',
@@ -278,7 +296,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
                 'publisher': identifier_model(ctx.publisher),
                 'responsiblePerson': email_model(first_nonempty(ctx.contact_email, 'placeholder@example.org')),
                 'version': str(c.get('Version date') or ctx.version),
-                'identifiers': [str(c.get('Class-Code') or ''), str(owned)],
+                'identifiers': [class_id, str(owned)],
                 'conformsTo': [x for x in [
                     resource_model(c.get('IFC_URI'), en='IFC 4.3 SSOT class pointer'),
                     resource_model(owned, en='LINDAS authoritative class IRI'),
@@ -289,6 +307,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
         concepts.append(payload)
         semantic_index.append({
             'kind': 'class',
+            'id': class_id,
             'code': c.get('Class-Code'),
             'ownedUri': owned,
             'ifcUri': c.get('IFC_URI'),
@@ -299,8 +318,9 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
             'i14yDatasetUri': ctx.dataset_uri,
         })
     for g in gops:
-        code = str(g.get('GoP-Code') or g.get('GoP-ID') or '').strip()
-        owned = f"{ctx.lindas_base}/group-of-properties/{slug(g.get('Designation (EN)') or code or g.get('Beschreibung (DE)') or 'gop')}"
+        gop_id = require_id(g, 'GoP-ID', 'GroupOfProperties')
+        code = str(g.get('GoP-Code') or '').strip()
+        owned = owned_uri(ctx.lindas_base, 'group-of-properties', gop_id)
         payload = {
             'data': {
                 'conceptType': 'String',
@@ -311,21 +331,23 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
                 'publisher': identifier_model(ctx.publisher),
                 'responsiblePerson': email_model(first_nonempty(ctx.contact_email, 'placeholder@example.org')),
                 'version': str(g.get('Version date') or ctx.version),
-                'identifiers': [code, owned],
+                'identifiers': [gop_id, owned],
                 'conformsTo': [x for x in [resource_model(owned, en='LINDAS authoritative GoP IRI'), resource_model(ctx.dataset_uri, en='I14Y dataset record')] if x],
             }
         }
         concepts.append(payload)
         semantic_index.append({
             'kind': 'groupOfProperties',
+            'id': gop_id,
             'code': code,
             'ownedUri': owned,
             'sourceWorkbook': display_workbook_path(ctx.path),
             'i14yDatasetUri': ctx.dataset_uri,
         })
     for p in props:
+        prop_id = require_id(p, 'Property-ID', 'Properties')
         code = str(p.get('Property-Code') or '').strip()
-        owned = first_nonempty(p.get('GUID/URI'), f"{ctx.lindas_base}/property/property/{slug(p.get('Designation (EN)') or p.get('Bezeichnung (DE)') or code)}")
+        owned = owned_uri(ctx.lindas_base, 'properties', prop_id)
         ctype, extra = infer_concept_type(p, by_prop_code)
         payload_data = {
             'conceptType': ctype,
@@ -334,7 +356,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
             'publisher': identifier_model(ctx.publisher),
             'responsiblePerson': email_model(first_nonempty(ctx.contact_email, 'placeholder@example.org')),
             'version': str(p.get('Version date') or ctx.version),
-            'identifiers': [code, str(owned)],
+            'identifiers': [prop_id, str(owned)],
             'conformsTo': [x for x in [
                 resource_model(p.get('IFC_URI'), en='IFC 4.3 SSOT property pointer'),
                 resource_model(p.get('QUDT URI'), en='QUDT unit SSOT pointer'),
@@ -346,6 +368,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
         concepts.append({'data': payload_data})
         semantic_index.append({
             'kind': 'property',
+            'id': prop_id,
             'code': code,
             'ownedUri': owned,
             'ifcUri': p.get('IFC_URI'),
@@ -373,10 +396,11 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
             continue
         entries = []
         for v in vals:
+            value_id = require_id(v, 'Enumeration-ID', 'Values')
             entries.append({
-                'code': first_nonempty(v.get('Enumeration-Code'), slug(first_nonempty(v.get('Enumeration (EN)'), v.get('Bezeichnung (DE)'), 'value'))),
+                'code': value_id,
                 'label': ml(de=v.get('Bezeichnung (DE)'), en=v.get('Enumeration (EN)'), fr=v.get('Désignation (FR)'), it=v.get('Designazione (IT)')),
-                'ownedUri': v.get('GUID/URI'),
+                'ownedUri': owned_uri(ctx.lindas_base, 'values', value_id),
                 'unit': v.get('Units/Einheit/Unité/Unità'),
             })
         codelist_entries.append({'propertyCode': pcode, 'entries': entries})
@@ -417,7 +441,8 @@ def build_bundle(workbooks: list[Path]):
         bundle['datasets'].append({
             'sourceWorkbook': display_workbook_path(wb_path),
             'i14yRecordUri': ctx.dataset_uri,
-            'lindasGraphUri': ctx.lindas_base,
+            'lindasGraphUri': ctx.lindas_graph,
+            'lindasResourceBaseUri': ctx.lindas_base,
             'partnerApi': dataset_payload,
             'counts': {
                 'classes': len(classes),
@@ -433,7 +458,8 @@ def build_bundle(workbooks: list[Path]):
         bundle['semantic']['skosRelations'].extend(skos_relations)
         bundle['semantic']['crossLinks'].append({
             'datasetUri': ctx.dataset_uri,
-            'lindasGraphUri': ctx.lindas_base,
+            'lindasGraphUri': ctx.lindas_graph,
+            'lindasResourceBaseUri': ctx.lindas_base,
             'sourceWorkbook': display_workbook_path(wb_path),
             'note': 'I14Y record should reference LINDAS authoritative IRIs; LINDAS RDF should reference this I14Y dataset URI as provenance.'
         })

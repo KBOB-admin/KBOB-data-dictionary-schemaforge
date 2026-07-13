@@ -60,10 +60,19 @@ def rowdict(ws, header_row=1, data_start=8):
     return rows
 
 
-def mint_or_owned(base, subpath, owned_uri, label_or_code):
-    if owned_uri:
-        return URIRef(str(owned_uri))
-    return URIRef(f"{base}/{subpath}/{slug(label_or_code)}")
+def require_id(row, column, sheet_name):
+    value = str(row.get(column) or '').strip()
+    if not value:
+        row_no = row.get('_row', '?')
+        raise ValueError(f'{sheet_name} row {row_no} is missing required system identifier {column}')
+    return value
+
+
+def mint_from_id(base, subpath, identifier):
+    identifier = str(identifier or '').strip()
+    if not identifier:
+        raise ValueError(f'Cannot mint {subpath} URI without an identifier')
+    return URIRef(f"{base}/{subpath}/{slug(identifier)}")
 
 
 def dataset_uri_for_workbook(path):
@@ -134,9 +143,12 @@ def main(argv=None):
         gop_uri_by_code = {}
 
         for c in classes:
-            code = c.get('Class-Code') or c.get('Designation (EN)') or c.get('Bezeichnung (DE)')
-            uri = mint_or_owned(base, 'class', c.get('GUID/URI'), code)
-            class_uri_by_code[str(c.get('Class-Code') or code)] = uri
+            class_id = require_id(c, 'Class-ID', 'Classes')
+            code = str(c.get('Class-Code') or '').strip()
+            uri = mint_from_id(base, 'classes', class_id)
+            class_uri_by_code[class_id] = uri
+            if code:
+                class_uri_by_code[code] = uri
             g.add((uri, RDF.type, RDFS.Class))
             g.add((dataset_uri, DD.hasClass, uri))
             add_labels(g, uri, c.get('Bezeichnung (DE)'), c.get('Designation (EN)'), c.get('Désignation (FR)'), c.get('Designazione (IT)'))
@@ -152,9 +164,12 @@ def main(argv=None):
                 g.add((uri, RDFS.comment, Literal(f"IFC predefined type: {c.get('PredefinedType')}")))
 
         for gop in gops:
-            gcode = str(gop.get('GoP-Code') or gop.get('GoP-ID') or '').strip()
-            gop_uri = mint_or_owned(base, 'group-of-properties', None, gop.get('Designation (EN)') or gcode or gop.get('Beschreibung (DE)'))
-            gop_uri_by_code[gcode] = gop_uri
+            gop_id = require_id(gop, 'GoP-ID', 'GroupOfProperties')
+            gcode = str(gop.get('GoP-Code') or '').strip()
+            gop_uri = mint_from_id(base, 'group-of-properties', gop_id)
+            gop_uri_by_code[gop_id] = gop_uri
+            if gcode:
+                gop_uri_by_code[gcode] = gop_uri
             g.add((gop_uri, RDF.type, DD.GroupOfProperties))
             g.add((dataset_uri, DD.hasGroupOfProperties, gop_uri))
             add_labels(g, gop_uri, gop.get('Beschreibung (DE)'), gop.get('Designation (EN)'), gop.get('Description (FR)'), gop.get('Descrizione (IT)'))
@@ -167,9 +182,12 @@ def main(argv=None):
             values_by_designation.setdefault(designation, []).append(v)
 
         for prop in props:
+            prop_id = require_id(prop, 'Property-ID', 'Properties')
             code = str(prop.get('Property-Code') or '').strip()
-            uri = mint_or_owned(base, 'property', prop.get('GUID/URI'), prop.get('Designation (EN)') or prop.get('Bezeichnung (DE)') or code)
-            property_uri_by_code[code] = uri
+            uri = mint_from_id(base, 'properties', prop_id)
+            property_uri_by_code[prop_id] = uri
+            if code:
+                property_uri_by_code[code] = uri
             g.add((uri, RDF.type, RDF.Property))
             g.add((dataset_uri, DD.hasProperty, uri))
             add_labels(g, uri, prop.get('Bezeichnung (DE)'), prop.get('Designation (EN)'), prop.get('Désignation (FR)'), prop.get('Designazione (IT)'))
@@ -183,11 +201,7 @@ def main(argv=None):
                 g.add((uri, RDFS.comment, Literal(f"IFC property set: {pset_name}")))
                 if pset_name.startswith('http'):
                     pset_uri = URIRef(pset_name)
-                    g.add((pset_uri, RDF.type, DD.GroupOfProperties))
-                    g.add((dataset_uri, DD.hasGroupOfProperties, pset_uri))
                     g.add((uri, DD.alignedWithIfcPset, pset_uri))
-                    g.add((uri, DD.inGroupOfProperties, pset_uri))
-                    g.add((pset_uri, DD.groupContainsProperty, uri))
                 else:
                     g.add((uri, DD.alignedWithIfcPset, Literal(pset_name)))
                 for gcode, guri in gop_uri_by_code.items():
@@ -200,7 +214,8 @@ def main(argv=None):
             enum_designation = str(prop.get('EnumerationDesignation (EN)') or '').strip()
             if enum_designation and enum_designation in values_by_designation:
                 for vv in values_by_designation[enum_designation]:
-                    val_uri = mint_or_owned(base, 'value', vv.get('GUID/URI'), vv.get('Enumeration-Code') or vv.get('Enumeration (EN)') or vv.get('Bezeichnung (DE)'))
+                    value_id = require_id(vv, 'Enumeration-ID', 'Values')
+                    val_uri = mint_from_id(base, 'values', value_id)
                     g.add((val_uri, RDF.type, SKOS.Concept))
                     g.add((val_uri, RDF.type, DD.AllowedValue))
                     add_labels(g, val_uri, vv.get('Bezeichnung (DE)'), vv.get('Enumeration (EN)'), vv.get('Désignation (FR)'), vv.get('Designazione (IT)'))
@@ -218,13 +233,15 @@ def main(argv=None):
             target = str(row.get('RelatedPropertyUri') or '').strip()
             if not s_code or not rel or not target:
                 continue
-            s_uri = property_uri_by_code.get(s_code) or class_uri_by_code.get(s_code) or mint_or_owned(base, 'property', None, s_code)
+            if s_code not in property_uri_by_code and s_code not in class_uri_by_code:
+                raise ValueError(f'ConceptRelation row {row.get("_row", "?")} references unknown source code/id: {s_code}')
+            s_uri = property_uri_by_code.get(s_code) or class_uri_by_code.get(s_code)
             pred_local = rel.split(':')[-1]
             if hasattr(SKOS, pred_local):
                 pred = getattr(SKOS, pred_local)
             else:
                 pred = URIRef(rel)
-            t_uri = URIRef(target) if target.startswith('http') else mint_or_owned(base, 'property', None, target)
+            t_uri = URIRef(target) if target.startswith('http') else mint_from_id(base, 'properties', target)
             g.add((s_uri, pred, t_uri))
             if row.get('Notes'):
                 g.add((s_uri, RDFS.comment, Literal(str(row.get('Notes')))))
