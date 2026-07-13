@@ -10,6 +10,7 @@ import argparse
 import configparser
 import getpass
 import os
+import tempfile
 from pathlib import Path
 
 try:
@@ -21,6 +22,7 @@ BASE = Path(__file__).resolve().parents[1]
 DEFAULT_TTL = BASE / 'out' / 'combined.ttl'
 DEFAULT_CONFIG = BASE / 'external' / 'lindas.ini'
 DEFAULT_GRAPH = 'https://lindas.admin.ch/fobl/kbob/dd-fm'
+STARDOG_CONNECTION_KEYS = {'endpoint', 'username', 'password'}
 
 
 def ensure_local_config(config: Path, environment: str, graph: str) -> Path:
@@ -55,6 +57,34 @@ def read_config_graph(config: Path, environment: str) -> str | None:
     return value or None
 
 
+def write_pylindas_connection_config(config: Path, environment: str) -> Path:
+    cp = configparser.RawConfigParser()
+    cp.read(config)
+    section = environment.upper()
+    if not cp.has_section(section):
+        raise SystemExit(f"Config section not found: [{section}]")
+
+    clean = configparser.RawConfigParser()
+    clean.add_section(section)
+    for key in STARDOG_CONNECTION_KEYS:
+        if cp.has_option(section, key):
+            clean.set(section, key, cp.get(section, key))
+
+    handle = tempfile.NamedTemporaryFile(
+        mode='w',
+        encoding='utf8',
+        prefix='schemaforge-lindas-',
+        suffix='.ini',
+        delete=False,
+    )
+    try:
+        os.chmod(handle.name, 0o600)
+        clean.write(handle)
+    finally:
+        handle.close()
+    return Path(handle.name)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('--ttl', default=str(DEFAULT_TTL))
@@ -86,7 +116,11 @@ def main(argv=None):
         raise SystemExit('pylindas is not installed. Install it locally before running --publish.')
 
     config = ensure_local_config(config, args.environment, graph)
-    upload_ttl(str(ttl), str(config), args.environment, graph, clear_graph=args.clear_graph)
+    pylindas_config = write_pylindas_connection_config(config, args.environment)
+    try:
+        upload_ttl(str(ttl), str(pylindas_config), args.environment, graph, clear_graph=args.clear_graph)
+    finally:
+        pylindas_config.unlink(missing_ok=True)
     print('Publish complete.')
     return 0
 
