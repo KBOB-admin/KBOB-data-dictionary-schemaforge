@@ -460,6 +460,21 @@ def dataset_uri_for_workbook(path):
     return URIRef(f"https://i14y.admin.ch/catalog/{slug(Path(path).stem)}")
 
 
+def header_metadata(wb):
+    if 'Header' not in wb.sheetnames:
+        return {}
+    ws = wb['Header']
+    meta = {}
+    for row in ws.iter_rows(values_only=True):
+        if not row or row[0] in (None, ''):
+            continue
+        key = str(row[0]).strip()
+        value = row[1] if len(row) > 1 else None
+        if value not in (None, ''):
+            meta[key] = value
+    return meta
+
+
 def workbook_resources(wb, wb_path, dict_prefix=''):
     classes = rowdict(wb['Classes']) if 'Classes' in wb.sheetnames else []
     props = rowdict(wb['Properties']) if 'Properties' in wb.sheetnames else []
@@ -535,12 +550,27 @@ def main(argv=None):
     # process both workbooks
     for wb, wb_formula, path, prefix in [(kbob, kbob_formula, args.kbob, ''), (area, area_formula, args.areamgmt, BDCH)]:
         classes, props, gops, vals, docs, concept_rel, dataset_uri, base = workbook_resources(wb, path, prefix)
+        header = header_metadata(wb)
         enum_schemes, enum_by_designation, enum_diagnostics = build_enumerations(vals)
         diagnostics.extend([f'{Path(path).name}: {line}' for line in enum_diagnostics])
         # dataset provenance node
         g.add((dataset_uri, RDF.type, URIRef('http://www.w3.org/ns/dcat#Dataset')))
         g.add((dataset_uri, RDF.type, DD.DataDictionary))
-        g.add((dataset_uri, RDFS.label, Literal(Path(path).stem, lang='en')))
+        dictionary_name_en = header.get('DictionaryName (EN)') or Path(path).stem
+        g.add((dataset_uri, RDFS.label, Literal(str(dictionary_name_en), lang='en')))
+        if header.get('DictionaryName (DE)'):
+            g.add((dataset_uri, RDFS.label, Literal(str(header.get('DictionaryName (DE)')), lang='de')))
+        if header.get('DictionaryName (FR)'):
+            g.add((dataset_uri, RDFS.label, Literal(str(header.get('DictionaryName (FR)')), lang='fr')))
+        if header.get('DictionaryName (IT)'):
+            g.add((dataset_uri, RDFS.label, Literal(str(header.get('DictionaryName (IT)')), lang='it')))
+        if header.get('DictionaryCode'):
+            g.add((dataset_uri, DCTERMS.identifier, Literal(str(header.get('DictionaryCode')))))
+        if header.get('DictionaryVersion'):
+            g.add((dataset_uri, OWL.versionInfo, Literal(str(header.get('DictionaryVersion')))))
+        if header.get('DictionaryUri'):
+            g.add((dataset_uri, RDFS.seeAlso, URIRef(str(header.get('DictionaryUri')))))
+        g.add((dataset_uri, DD.sourceWorkbook, Literal(Path(path).name)))
 
         property_uri_by_code = {}
         class_uri_by_code = {}
@@ -695,7 +725,12 @@ def main(argv=None):
                         g.add((uri, DD.inGroupOfProperties, guri))
                         g.add((guri, DD.groupContainsProperty, uri))
             if prop.get('DataType\n(Base Type)'):
+                g.add((uri, DD.datatype, Literal(str(prop.get('DataType\n(Base Type)')))))
                 g.add((uri, RDFS.comment, Literal(f"Data type: {prop.get('DataType\n(Base Type)')}")))
+            if prop.get('DataType\n(IFC)'):
+                g.add((uri, DD.ifcDatatype, Literal(str(prop.get('DataType\n(IFC)')))))
+            if prop.get('Status'):
+                g.add((uri, DD.status, Literal(str(prop.get('Status')))))
             # preserve enumeration relation
             enum_designation = str(prop.get('EnumerationDesignation (EN)') or '').strip()
             if enum_designation:

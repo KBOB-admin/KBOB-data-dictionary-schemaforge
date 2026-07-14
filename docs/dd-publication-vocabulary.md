@@ -11,7 +11,7 @@ Ein schlankes Strukturvokabular fuer publizierte Data Dictionaries. Es ersetzt n
 
 Die Publikation verwendet etablierte Vokabulare zuerst:
 
-- Data-Dictionary-Datensaetze werden als `dcat:Dataset` und `dd:DataDictionary` publiziert.
+- Data-Dictionary-Datensaetze werden als `dcat:Dataset` und `dd:DataDictionary` publiziert. Das nutzerseitige Dictionary-Label stammt aus `Header.DictionaryName (...)`; die konkrete Excel-Datei wird separat als `dd:sourceWorkbook` festgehalten.
 - Klassen werden als `rdfs:Class` publiziert.
 - Properties werden als `rdf:Property` publiziert.
 - Enumeration Schemes werden als `skos:ConceptScheme` und `dd:EnumerationScheme` publiziert.
@@ -102,6 +102,14 @@ Die Publikation verwendet etablierte Vokabulare zuerst:
   - Klasse -> IFC-spezifischer Predefined-Type-Anker
 - `dd:dictionaryRecord`
   - semantische Ressource -> I14Y-Dataset-/Katalogeintrag-URI
+- `dd:sourceWorkbook`
+  - Data Dictionary Dataset -> konkreter Excel-Dateiname der Publikationsquelle
+- `dd:datatype`
+  - Property -> `Properties.DataType (Base Type)` als publizierter Basisdatentyp
+- `dd:ifcDatatype`
+  - Property -> `Properties.DataType (IFC)` als publizierter IFC-Datentyp
+- `dd:status`
+  - Document, Property oder Data Template -> Lifecycle-/Governance-Status aus dem Workbook
 
 ## SKOS-Regeln fuer Enumerations
 
@@ -208,6 +216,18 @@ PropertyRequirement
 ```
 
 Die Anforderung wird nicht als direkte Class-Property-Kante modelliert, weil Matrixzellen kontextuelle Semantik enthalten: Einbindung, Wertlisten-Teilmenge, Datentyp-/Einheitskontext, Governance und spaeter IDS-relevante Informationen.
+
+Property-Grundmetadaten werden auf der allgemeinen Property publiziert:
+
+```text
+Property
+  dd:datatype "BOOLEAN" ;
+  dd:ifcDatatype "IfcBoolean" ;
+  dd:status "..." ;
+  qudt:hasUnit <QUDT-URI> .
+```
+
+Property Requirements koennen diese allgemeinen Werte im Data-Template-Kontext referenzieren oder, wo bereits publiziert, mit `dd:contextualDatatype` und `dd:contextualUnit` spiegeln. Unaufgeloeste Quelltext-Einheiten werden nicht als semantische QUDT-Einheit angezeigt.
 
 ### Matrixzellen
 

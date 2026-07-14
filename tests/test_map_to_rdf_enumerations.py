@@ -5,8 +5,8 @@ import shutil
 import sys
 
 from openpyxl import load_workbook
-from rdflib import Graph, Namespace, URIRef
-from rdflib.namespace import RDF, SKOS
+from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib.namespace import RDF, RDFS, SKOS, DCTERMS, OWL
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -67,6 +67,26 @@ class EnumerationMappingTests(unittest.TestCase):
         self.assertIn((template, DD.hasPropertyRequirement, req_guid), graph)
         self.assertIn((req_guid, RDF.type, DD.PropertyRequirement), graph)
         self.assertNotIn((template, DD.hasPropertyRequirement, req_site_id), graph)
+
+    def test_dataset_uses_header_dictionary_name_and_source_workbook(self):
+        tmp, graph = self.export_actual_workbooks()
+        self.addCleanup(tmp.cleanup)
+
+        dataset = URIRef('https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5')
+        self.assertIn((dataset, RDFS.label, None), graph)
+        self.assertIn((dataset, RDFS.label, Literal('KBOB FM Data Dictionary', lang='en')), graph)
+        self.assertIn((dataset, DCTERMS.identifier, Literal('kbob_fm_data_dictionary')), graph)
+        self.assertIn((dataset, OWL.versionInfo, Literal('0.3.0')), graph)
+        self.assertIn((dataset, DD.sourceWorkbook, Literal('Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx')), graph)
+
+    def test_property_datatype_ifc_datatype_and_status_are_published(self):
+        tmp, graph = self.export_actual_workbooks()
+        self.addCleanup(tmp.cleanup)
+
+        prop = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/airconditioning')
+        self.assertIn((prop, DD.datatype, Literal('BOOLEAN')), graph)
+        self.assertIn((prop, DD.ifcDatatype, None), graph)
+        self.assertIn((prop, DD.status, None), graph)
 
     def test_x_requirement_retains_property_level_enumeration(self):
         tmp, graph = self.export_actual_workbooks()
