@@ -1,0 +1,380 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix dd: <https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1_GSF"@de,
+        "1.2"@en,
+        "1_ST"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "1.2" ;
+    skos:prefLabel "1_GSF"@de,
+        "1.2"@en,
+        "1_ST"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 1 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0002-1-2-1> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1.1_GGF"@de,
+        "1.2.1"@en,
+        "1.1_SB"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "1.2.1" ;
+    skos:prefLabel "1.1_GGF"@de,
+        "1.2.1"@en,
+        "1.1_SB"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 2 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0003-1-2-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1.2_UF"@de,
+        "1.2.2"@en,
+        "1.2_SA"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "1.2.2" ;
+    skos:prefLabel "1.2_UF"@de,
+        "1.2.2"@en,
+        "1.2_SA"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 3 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0004-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1.2.1_BUF"@de,
+        "2"@en,
+        "1.2.1_SAA"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdf:value 2 ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2" ;
+    skos:prefLabel "1.2.1_BUF"@de,
+        "2"@en,
+        "1.2.1_SAA"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 4 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0005-2-1-1-1> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1.2.2_UUF"@de,
+        "2.1.1.1"@en,
+        "1.2.2_SAN"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2.1.1.1" ;
+    skos:prefLabel "1.2.2_UUF"@de,
+        "2.1.1.1"@en,
+        "1.2.2_SAN"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 5 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0006-2-1-1-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "2_GF"@de,
+        "2.1.1.2"@en,
+        "2_SP"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2.1.1.2" ;
+    skos:prefLabel "2_GF"@de,
+        "2.1.1.2"@en,
+        "2_SP"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 6 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0007-2-1-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "2.1.1.1_HNF"@de,
+        "2.1.2"@en,
+        "2.1.1.1_SUP"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2.1.2" ;
+    skos:prefLabel "2.1.1.1_HNF"@de,
+        "2.1.2"@en,
+        "2.1.1.1_SUP"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 7 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0008-2-1-3> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "2.1.1.2_NNF"@de,
+        "2.1.3"@en,
+        "2.1.1.2_SUS"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2.1.3" ;
+    skos:prefLabel "2.1.1.2_NNF"@de,
+        "2.1.3"@en,
+        "2.1.1.2_SUS"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 8 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0009-3> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "2.1.2_VF"@de,
+        "3"@en,
+        "2.1.2_SD"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdf:value 3 ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "3" ;
+    skos:prefLabel "2.1.2_VF"@de,
+        "3"@en,
+        "2.1.2_SD"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 9 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0010-3-1-1> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "2.1.3_FF"@de,
+        "3.1.1"@en,
+        "2.1.3_SI"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "3.1.1" ;
+    skos:prefLabel "2.1.3_FF"@de,
+        "3.1.1"@en,
+        "2.1.3_SI"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 10 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0011-3-1-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "3_AGF"@de,
+        "3.1.2"@en,
+        "3_SEP"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "3.1.2" ;
+    skos:prefLabel "3_AGF"@de,
+        "3.1.2"@en,
+        "3_SEP"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 11 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0012-3-1-3> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "3.1_ANGF"@de,
+        "3.1.3"@en,
+        "3.1_SEN"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "3.1.3" ;
+    skos:prefLabel "3.1_ANGF"@de,
+        "3.1.3"@en,
+        "3.1_SEN"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 12 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0013-airspace> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "3.1.1_ANF"@de,
+        "AIRSPACE"@en,
+        "3.1.1_SEU"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "AIRSPACE" ;
+    skos:prefLabel "3.1.1_ANF"@de,
+        "AIRSPACE"@en,
+        "3.1.1_SEU"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 13 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0014-roof> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "3.1.2_AVF"@de,
+        "ROOF"@en,
+        "3.1.2_SED"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "ROOF" ;
+    skos:prefLabel "3.1.2_AVF"@de,
+        "ROOF"@en,
+        "3.1.2_SED"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 14 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0015-1> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "3.1.3_AFF"@de,
+        "1"@en,
+        "3.1.3_SEI"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdf:value 1 ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "1" ;
+    skos:prefLabel "3.1.3_AFF"@de,
+        "1"@en,
+        "3.1.3_SEI"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 15 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0016-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "5_GV"@de,
+        "2"@en,
+        "5_VB"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdf:value 2 ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2" ;
+    skos:prefLabel "5_GV"@de,
+        "2"@en,
+        "5_VB"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 16 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0017-3> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "AIRSPACE_LUFTRAUM"@de,
+        "3"@en,
+        "AIRSPACE_VIDE"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdf:value 3 ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "3" ;
+    skos:prefLabel "AIRSPACE_LUFTRAUM"@de,
+        "3"@en,
+        "AIRSPACE_VIDE"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 17 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0018-4> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "ROOF_DACH"@de,
+        "4"@en,
+        "ROOF_TOIT"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdf:value 4 ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "4" ;
+    skos:prefLabel "ROOF_DACH"@de,
+        "4"@en,
+        "ROOF_TOIT"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 18 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> a skos:ConceptScheme,
+        dd:EnumerationScheme ;
+    rdfs:label "Flächenart SIA 416 Code"@de,
+        "Area type SIA 416 code"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:notation "IFMA_V_31030004" ;
+    skos:prefLabel "Flächenart SIA 416 Code"@de,
+        "Area type SIA 416 code"@en ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationSchemeForProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> ;
+    dd:hasEnumerationValue <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0002-1-2-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0003-1-2-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0004-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0005-2-1-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0006-2-1-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0007-2-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0008-2-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0009-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0010-3-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0011-3-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0012-3-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0013-airspace>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0014-roof>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0015-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0016-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0017-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0018-4> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> a rdf:Property ;
+    rdfs:label "SIA 416:2003 Flächenart"@de,
+        "SIA_416_2003"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdfs:comment "Data type: STRING" ;
+    skos:definition "Klassifizierung gemäss SIA 416 / 2003"@de,
+        "Classification according to SIA 416 / 2003"@en ;
+    skos:related <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0002-1-2-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0003-1-2-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0004-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0005-2-1-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0006-2-1-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0007-2-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0008-2-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0009-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0010-3-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0011-3-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0012-3-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0013-airspace>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0014-roof>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0015-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0016-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0017-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0018-4> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:hasAllowedValue <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0002-1-2-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0003-1-2-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0004-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0005-2-1-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0006-2-1-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0007-2-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0008-2-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0009-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0010-3-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0011-3-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0012-3-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0013-airspace>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0014-roof>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0015-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0016-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0017-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0018-4> ;
+    dd:usesEnumerationScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> .
+
+<https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> dd:hasEnumerationScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    dd:hasProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+

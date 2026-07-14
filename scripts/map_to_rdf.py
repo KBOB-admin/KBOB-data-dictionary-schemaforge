@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from rdflib import Graph, Namespace, URIRef, Literal
-from rdflib.namespace import RDF, RDFS, SKOS, DCTERMS, OWL
+from rdflib.namespace import RDF, RDFS, SKOS, DCTERMS, OWL, XSD
 from openpyxl import load_workbook
 from pathlib import Path
-import argparse, re
+import argparse, ast, json, re
 
 LINDAS_BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm'
 BDCH = 'bdch'
@@ -74,6 +74,118 @@ def mint_from_id(base, subpath, identifier):
     if not identifier:
         raise ValueError(f'Cannot mint {subpath} URI without an identifier')
     return URIRef(f"{base}/{subpath}/{slug(identifier)}")
+
+
+def mint_value_uri(base, enum_id, position, lexical):
+    return URIRef(f"{base}/enumerations/{slug(enum_id)}/values/{position:04d}-{slug(lexical)}")
+
+
+def parse_value_list(value, sheet_name, row_no, column):
+    if value in (None, ''):
+        return []
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    text = str(value).strip()
+    if not text:
+        return []
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        try:
+            parsed = ast.literal_eval(text)
+        except (ValueError, SyntaxError) as exc:
+            raise ValueError(f'{sheet_name} row {row_no} column {column} must contain a JSON-style list') from exc
+    if not isinstance(parsed, list):
+        raise ValueError(f'{sheet_name} row {row_no} column {column} must contain a list')
+    return parsed
+
+
+def lexical(value):
+    if value is None:
+        return ''
+    if isinstance(value, bool):
+        return 'true' if value else 'false'
+    return str(value).strip()
+
+
+def typed_literal(value):
+    if isinstance(value, bool):
+        return Literal(value)
+    if isinstance(value, int) and not isinstance(value, bool):
+        return Literal(value, datatype=XSD.integer)
+    if isinstance(value, float):
+        return Literal(value, datatype=XSD.decimal)
+    return None
+
+
+def add_pref_labels(g, uri, de=None, en=None, fr=None, it=None):
+    labels = [('en', en), ('de', de), ('fr', fr), ('it', it)]
+    for lang, value in labels:
+        if value not in (None, ''):
+            lit = Literal(lexical(value), lang=lang)
+            g.add((uri, SKOS.prefLabel, lit))
+            g.add((uri, RDFS.label, lit))
+
+
+def build_enumerations(values_rows, sheet_name='Values'):
+    schemes = []
+    by_designation = {}
+    by_id = {}
+    diagnostics = []
+    for row in values_rows:
+        enum_id = require_id(row, 'Enumeration-ID', sheet_name)
+        row_no = row.get('_row', '?')
+        designation_en = str(row.get('Designation (EN)') or '').strip()
+        if not designation_en:
+            raise ValueError(f'{sheet_name} row {row_no} is missing required Designation (EN)')
+        if enum_id in by_id:
+            raise ValueError(f'{sheet_name} row {row_no} duplicates Enumeration-ID: {enum_id}')
+        lists = {
+            'en': parse_value_list(row.get('Enumeration (EN)'), sheet_name, row_no, 'Enumeration (EN)'),
+            'de': parse_value_list(row.get('Werteliste\n(DE)'), sheet_name, row_no, 'Werteliste (DE)'),
+            'fr': parse_value_list(row.get('Liste de valeurs\n(FR)'), sheet_name, row_no, 'Liste de valeurs (FR)'),
+            'it': parse_value_list(row.get('Lista valori\n(IT)'), sheet_name, row_no, 'Lista valori (IT)'),
+        }
+        populated_lengths = {lang: len(items) for lang, items in lists.items() if items}
+        if not populated_lengths:
+            raise ValueError(f'{sheet_name} row {row_no} has no enumeration values')
+        canonical_len = populated_lengths.get('en') or next(iter(populated_lengths.values()))
+        for lang, length in populated_lengths.items():
+            if length != canonical_len:
+                raise ValueError(
+                    f'{sheet_name} row {row_no} has misaligned value-list lengths: '
+                    f'{", ".join(f"{k}={v}" for k, v in sorted(populated_lengths.items()))}'
+                )
+        values = []
+        seen_value_uris = set()
+        for index in range(canonical_len):
+            labels = {lang: (items[index] if items else None) for lang, items in lists.items()}
+            canonical = lexical(labels.get('en') or labels.get('de') or labels.get('fr') or labels.get('it') or index + 1)
+            value_uri_key = f'{index + 1:04d}-{slug(canonical)}'
+            if value_uri_key in seen_value_uris:
+                raise ValueError(f'{sheet_name} row {row_no} produces a duplicate value URI token: {value_uri_key}')
+            seen_value_uris.add(value_uri_key)
+            values.append({'position': index + 1, 'canonical': canonical, 'labels': labels, 'raw': labels.get('en')})
+        scheme = {
+            'id': enum_id,
+            'code': str(row.get('Enumeration-Code') or '').strip(),
+            'designation_en': designation_en,
+            'labels': {
+                'en': row.get('Designation (EN)'),
+                'de': row.get('Bezeichnung (DE)'),
+                'fr': row.get('Désignation (FR)'),
+                'it': row.get('Designazione (IT)'),
+            },
+            'values': values,
+            'row': row,
+        }
+        by_id[enum_id] = scheme
+        if designation_en in by_designation:
+            raise ValueError(f'{sheet_name} row {row_no} duplicates Designation (EN): {designation_en}')
+        by_designation[designation_en] = scheme
+        diagnostics.append(f'{designation_en}: {len(values)} value(s), URI basis Enumeration-ID={enum_id}')
+        schemes.append(scheme)
+    return schemes, by_designation, diagnostics
 
 
 def normalize_predefined_type(value):
@@ -172,9 +284,12 @@ def main(argv=None):
     g.bind('dd', DD)
     g.bind('lindas', Namespace(LINDAS_BASE+'/'))
 
+    diagnostics = []
     # process both workbooks
     for wb, path, prefix in [(kbob, args.kbob, ''), (area, args.areamgmt, BDCH)]:
         classes, props, gops, vals, concept_rel, dataset_uri, base = workbook_resources(wb, path, prefix)
+        enum_schemes, enum_by_designation, enum_diagnostics = build_enumerations(vals)
+        diagnostics.extend([f'{Path(path).name}: {line}' for line in enum_diagnostics])
         # dataset provenance node
         g.add((dataset_uri, RDF.type, URIRef('http://www.w3.org/ns/dcat#Dataset')))
         g.add((dataset_uri, RDF.type, DD.DataDictionary))
@@ -218,11 +333,48 @@ def main(argv=None):
             add_labels(g, gop_uri, gop.get('Beschreibung (DE)'), gop.get('Designation (EN)'), gop.get('Description (FR)'), gop.get('Descrizione (IT)'))
             add_resource_links(g, gop_uri, dataset_uri)
 
-        # map enum designation to values
-        values_by_designation = {}
-        for v in vals:
-            designation = str(v.get('Werteliste\n(DE)') or v.get('Enumeration (EN)') or '').strip()
-            values_by_designation.setdefault(designation, []).append(v)
+        value_uris_by_scheme_id = {}
+        for scheme in enum_schemes:
+            scheme_uri = mint_from_id(base, 'enumerations', scheme['id'])
+            value_uris = []
+            g.add((scheme_uri, RDF.type, SKOS.ConceptScheme))
+            g.add((scheme_uri, RDF.type, DD.EnumerationScheme))
+            g.add((dataset_uri, DD.hasEnumerationScheme, scheme_uri))
+            add_pref_labels(
+                g,
+                scheme_uri,
+                de=scheme['labels']['de'],
+                en=scheme['labels']['en'],
+                fr=scheme['labels']['fr'],
+                it=scheme['labels']['it'],
+            )
+            if scheme['code']:
+                g.add((scheme_uri, SKOS.notation, Literal(scheme['code'])))
+            add_resource_links(g, scheme_uri, dataset_uri)
+            for value in scheme['values']:
+                val_uri = mint_value_uri(base, scheme['id'], value['position'], value['canonical'])
+                value_uris.append(val_uri)
+                g.add((val_uri, RDF.type, SKOS.Concept))
+                g.add((val_uri, RDF.type, DD.EnumerationValue))
+                g.add((val_uri, RDF.type, DD.AllowedValue))
+                g.add((val_uri, SKOS.inScheme, scheme_uri))
+                g.add((scheme_uri, DD.hasEnumerationValue, val_uri))
+                g.add((val_uri, DD.enumerationPosition, Literal(value['position'], datatype=XSD.integer)))
+                add_pref_labels(
+                    g,
+                    val_uri,
+                    de=value['labels'].get('de'),
+                    en=value['labels'].get('en'),
+                    fr=value['labels'].get('fr'),
+                    it=value['labels'].get('it'),
+                )
+                if value['canonical']:
+                    g.add((val_uri, SKOS.notation, Literal(value['canonical'])))
+                literal_value = typed_literal(value['raw'])
+                if literal_value is not None:
+                    g.add((val_uri, RDF.value, literal_value))
+                add_resource_links(g, val_uri, dataset_uri)
+            value_uris_by_scheme_id[scheme['id']] = value_uris
 
         for prop in props:
             prop_id = require_id(prop, 'Property-ID', 'Properties')
@@ -255,19 +407,21 @@ def main(argv=None):
                 g.add((uri, RDFS.comment, Literal(f"Data type: {prop.get('DataType\n(Base Type)')}")))
             # preserve enumeration relation
             enum_designation = str(prop.get('EnumerationDesignation (EN)') or '').strip()
-            if enum_designation and enum_designation in values_by_designation:
-                for vv in values_by_designation[enum_designation]:
-                    value_id = require_id(vv, 'Enumeration-ID', 'Values')
-                    val_uri = mint_from_id(base, 'values', value_id)
-                    g.add((val_uri, RDF.type, SKOS.Concept))
-                    g.add((val_uri, RDF.type, DD.AllowedValue))
-                    add_labels(g, val_uri, vv.get('Bezeichnung (DE)'), vv.get('Enumeration (EN)'), vv.get('Désignation (FR)'), vv.get('Designazione (IT)'))
+            if enum_designation:
+                if enum_designation not in enum_by_designation:
+                    diagnostics.append(
+                        f'{Path(path).name}: WARNING Properties row {prop.get("_row", "?")} references unknown '
+                        f'EnumerationDesignation (EN): {enum_designation}'
+                    )
+                    continue
+                scheme = enum_by_designation[enum_designation]
+                scheme_uri = mint_from_id(base, 'enumerations', scheme['id'])
+                g.add((uri, DD.usesEnumerationScheme, scheme_uri))
+                g.add((scheme_uri, DD.enumerationSchemeForProperty, uri))
+                for val_uri in value_uris_by_scheme_id.get(scheme['id'], []):
                     g.add((uri, DD.hasAllowedValue, val_uri))
                     g.add((val_uri, DD.valueOfProperty, uri))
                     g.add((uri, SKOS.related, val_uri))
-                    g.add((val_uri, DCTERMS.source, dataset_uri))
-                    if vv.get('GUID/URI') and 'ifc' in str(vv.get('GUID/URI')).lower():
-                        g.add((val_uri, DD.alignedWithIfcPredefinedType, URIRef(str(vv.get('GUID/URI')))))
 
         # preserve concept relations exactly as declared
         for row in concept_rel:
@@ -291,7 +445,16 @@ def main(argv=None):
 
     out_ttl=outdir/'combined.ttl'
     g.serialize(destination=str(out_ttl), format='turtle')
+    diagnostics_file = outdir/'mapper-diagnostics.md'
+    diagnostics_file.write_text(
+        '# Mapper Diagnostics\n\n'
+        '## Enumeration publication\n\n'
+        + ('\n'.join(f'- {line}' for line in diagnostics) if diagnostics else '- No enumeration schemes found.')
+        + '\n',
+        encoding='utf-8',
+    )
     print('wrote', out_ttl)
+    print('wrote', diagnostics_file)
 
 if __name__=='__main__':
     import sys
