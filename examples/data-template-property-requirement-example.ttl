@@ -1,0 +1,579 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix dd: <https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/classes/room> a rdfs:Class ;
+    rdfs:label "Nettogeschossfläche"@de,
+        "Room"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdfs:comment "IFC entity: IfcSpace",
+        "IFC predefined type: GFA" ;
+    skos:broadMatch <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSpace> ;
+    skos:definition "Innenräume (Nettogeschossflächen gemäss SIA 416)"@de,
+        "Internal spaces (net floor areas according to SIA 416)"@en ;
+    skos:exactMatch <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSpaceGFA> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:hasDataTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/data-templates/0009-room-ifma-areamgmt> ;
+    dd:ifcObjectEntity <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSpace> ;
+    dd:ifcPredefinedType <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSpaceGFA> ;
+    dd:referencesDocument <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/documents/sn-504-416-areas-and-volumes-of-buildings> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/classes/site> a rdfs:Class ;
+    rdfs:label "Grundstück"@de,
+        "Site"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    rdfs:comment "IFC entity: IfcSite" ;
+    skos:definition "KBOB-FM-Objektklasse für ein Grundstück als räumliche Einheit des bebauten oder unbebauten Areals."@de,
+        "KBOB FM object class for a site as a spatial unit of a developed or undeveloped plot."@en ;
+    skos:exactMatch <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSite> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    dd:hasDataTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/data-templates/0005-site-kbob-grundstuck-architekt>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/data-templates/0006-site-no-group> ;
+    dd:ifcObjectEntity <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSite> ;
+    dd:referencesDocument <https://lindas.admin.ch/fobl/kbob/dd-fm/documents/kbob-dk-fm-i14y-csv> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/properties/designation> a rdf:Property ;
+    rdfs:label "Bezeichnung"@de,
+        "Designation"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    rdfs:comment "Data type: STRING" ;
+    skos:definition "Merkmal zur Angabe von der Bezeichnung."@de,
+        "Property for specifying the designation."@en ;
+    skos:exactMatch <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/prop/Name> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    dd:requiredByTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0005-site-kbob-grundstuck-architekt/designation> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/properties/guid> a rdf:Property ;
+    rdfs:label "GUID"@de,
+        "GUID"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    rdfs:comment "Data type: STRING" ;
+    skos:definition "Merkmal zur eindeutigen Identifikation des Objekts mittels Global Unique Identifier (GUID)."@de,
+        "Property for uniquely identifying the object by means of a global unique identifier (GUID)."@en ;
+    skos:exactMatch <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/prop/GlobalId> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    dd:requiredByTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0005-site-kbob-grundstuck-architekt/guid>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0007-building-kbob-gebaude-architekt/guid>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0010-storey-kbob-geschoss-architekt/guid>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0013-room-kbob-raum-architekt/guid>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0017-component-kbob-bauteil-hlkkssearchitekt/guid> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-2024-2021> a dd:PropertyRequirement ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:appliesToClass <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/classes/room> ;
+    dd:contextualDatatype "STRING" ;
+    dd:inGroupOfProperties <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/group-of-properties/ifma-areamgmt> ;
+    dd:inclusionMarker "x" ;
+    dd:requirementLevel "included" ;
+    dd:requirementOfDataTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/data-templates/0009-room-ifma-areamgmt> ;
+    dd:requiresProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-2024-2021> ;
+    dd:usesCompleteValueScheme true ;
+    dd:usesEnumerationScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-416-2003> a dd:PropertyRequirement ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:allowedValue <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0005-2-1-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0006-2-1-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0007-2-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0008-2-1-3> ;
+    dd:appliesToClass <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/classes/room> ;
+    dd:contextualDatatype "STRING" ;
+    dd:inGroupOfProperties <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/group-of-properties/ifma-areamgmt> ;
+    dd:inclusionMarker "[\"2.1.1.1\", \"2.1.1.2\", \"2.1.2\", \"2.1.3\"]" ;
+    dd:requirementLevel "included" ;
+    dd:requirementOfDataTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/data-templates/0009-room-ifma-areamgmt> ;
+    dd:requiresProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> ;
+    dd:usesCompleteValueScheme false ;
+    dd:usesEnumerationScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0005-site-kbob-grundstuck-architekt/designation> a dd:PropertyRequirement ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    dd:appliesToClass <https://lindas.admin.ch/fobl/kbob/dd-fm/classes/site> ;
+    dd:contextualDatatype "STRING" ;
+    dd:inGroupOfProperties <https://lindas.admin.ch/fobl/kbob/dd-fm/group-of-properties/kbob-grundstuck-architekt> ;
+    dd:inclusionMarker "x" ;
+    dd:referencesDocument <https://lindas.admin.ch/fobl/kbob/dd-fm/documents/kbob-dk-fm-i14y-csv> ;
+    dd:requirementLevel "included" ;
+    dd:requirementOfDataTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/data-templates/0005-site-kbob-grundstuck-architekt> ;
+    dd:requiresProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/properties/designation> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0005-site-kbob-grundstuck-architekt/guid> a dd:PropertyRequirement ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    dd:appliesToClass <https://lindas.admin.ch/fobl/kbob/dd-fm/classes/site> ;
+    dd:contextualDatatype "STRING" ;
+    dd:inGroupOfProperties <https://lindas.admin.ch/fobl/kbob/dd-fm/group-of-properties/kbob-grundstuck-architekt> ;
+    dd:inclusionMarker "x" ;
+    dd:referencesDocument <https://lindas.admin.ch/fobl/kbob/dd-fm/documents/kbob-dk-fm-i14y-csv> ;
+    dd:requirementLevel "included" ;
+    dd:requirementOfDataTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/data-templates/0005-site-kbob-grundstuck-architekt> ;
+    dd:requiresProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/properties/guid> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/data-templates/0009-room-ifma-areamgmt> a dd:DataTemplate ;
+    rdfs:label "Room - IFMA_AreaMgmt"@en ;
+    dct:identifier "0009-room-ifma-areamgmt" ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:appliesToClass <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/classes/room> ;
+    dd:hasPropertyRequirement <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/aboveground>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/airconditioning>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/areaload>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/ceilingcovering>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/cleaninggroup>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/costzone>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/energyreferencearea>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/fireexit>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/floorcovering>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/height>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/humiditysetpoint>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/isdehumidified>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/isexternal>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/ishumidified>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/isrentable>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/longname>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/mechanicalventilation>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/mechanicalventilationrate>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/minimumheadroom>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/name>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/naturalventilation>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/naturalventilationrate>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/netfloorarea>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/netvolume>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/netwallarea>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/occupancynumber>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/occupancynumberpeak>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/occupancytype>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/occupant>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/pointload>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/programuse>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/roomnumberfm>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/roomsignallabel>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/roomtype>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/shading>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-2024-2021>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-380-2015>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-416-2003>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-d0615-2000>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/temperaturesetpoint>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/unit-id>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/wallcovering>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/windowscleaningarea>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/windowsopenable> ;
+    dd:includesGroupOfProperties <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/group-of-properties/ifma-areamgmt> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1_GSF"@de,
+        "1.2"@en,
+        "1_ST"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "1.2" ;
+    skos:prefLabel "1_GSF"@de,
+        "1.2"@en,
+        "1_ST"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 1 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0002-1-2-1> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1.1_GGF"@de,
+        "1.2.1"@en,
+        "1.1_SB"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "1.2.1" ;
+    skos:prefLabel "1.1_GGF"@de,
+        "1.2.1"@en,
+        "1.1_SB"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 2 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0001-1-01> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1.01_Wohnen Mehrfamilienhaus"@de,
+        "1.01"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdf:value 1.01 ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum> ;
+    skos:notation "1.01" ;
+    skos:prefLabel "1.01_Wohnen Mehrfamilienhaus"@de,
+        "1.01"@en ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 1 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-2024-2021> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0002-1-02> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1.02_Wohnen Einfamilienhaus"@de,
+        "1.02"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdf:value 1.02 ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum> ;
+    skos:notation "1.02" ;
+    skos:prefLabel "1.02_Wohnen Einfamilienhaus"@de,
+        "1.02"@en ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 2 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-2024-2021> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/group-of-properties/ifma-areamgmt> a dd:GroupOfProperties ;
+    rdfs:label "Enthält alle flächenbezogenen Parameter gemäss Norm SIA 416. Sie definiert Hauptnutz-, Nebennutz- und Verkehrsflächen zur präzisen Steuerung beim Facility Management"@de,
+        "IFMA_AreaMgmt"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/data-templates/0005-site-kbob-grundstuck-architekt> a dd:DataTemplate ;
+    rdfs:label "Site - KBOB_Grundstuck_Architekt"@en ;
+    dct:identifier "0005-site-kbob-grundstuck-architekt" ;
+    dct:modified "2026-06-30T12:00:00Z" ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    prov:wasAttributedTo "KBOB" ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    dd:appliesToClass <https://lindas.admin.ch/fobl/kbob/dd-fm/classes/site> ;
+    dd:hasPropertyRequirement <https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0005-site-kbob-grundstuck-architekt/designation>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0005-site-kbob-grundstuck-architekt/guid>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0005-site-kbob-grundstuck-architekt/owner-entity> ;
+    dd:includesGroupOfProperties <https://lindas.admin.ch/fobl/kbob/dd-fm/group-of-properties/kbob-grundstuck-architekt> ;
+    dd:loinMilestone "31" ;
+    dd:loinRole "Architekt" ;
+    dd:loinUsecase "Kostenplanung" ;
+    dd:referencesDocument <https://lindas.admin.ch/fobl/kbob/dd-fm/documents/kbob-dk-fm-i14y-csv> ;
+    dd:status "Candidate" .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/group-of-properties/kbob-grundstuck-architekt> a dd:GroupOfProperties ;
+    rdfs:label "Importierte Merkmalsgruppe aus altem ClassProperty.PropertySetName KBOB_Grundstuck_Architekt. (AI)"@de,
+        "KBOB_Grundstuck_Architekt"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0005-2-1-1-1> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "1.2.2_UUF"@de,
+        "2.1.1.1"@en,
+        "1.2.2_SAN"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2.1.1.1" ;
+    skos:prefLabel "1.2.2_UUF"@de,
+        "2.1.1.1"@en,
+        "1.2.2_SAN"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 5 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0006-2-1-1-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "2_GF"@de,
+        "2.1.1.2"@en,
+        "2_SP"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2.1.1.2" ;
+    skos:prefLabel "2_GF"@de,
+        "2.1.1.2"@en,
+        "2_SP"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 6 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0007-2-1-2> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "2.1.1.1_HNF"@de,
+        "2.1.2"@en,
+        "2.1.1.1_SUP"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2.1.2" ;
+    skos:prefLabel "2.1.1.1_HNF"@de,
+        "2.1.2"@en,
+        "2.1.1.1_SUP"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 7 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0008-2-1-3> a skos:Concept,
+        dd:AllowedValue,
+        dd:EnumerationValue ;
+    rdfs:label "2.1.1.2_NNF"@de,
+        "2.1.3"@en,
+        "2.1.1.2_SUS"@fr ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> ;
+    skos:notation "2.1.3" ;
+    skos:prefLabel "2.1.1.2_NNF"@de,
+        "2.1.3"@en,
+        "2.1.1.2_SUS"@fr ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationPosition 8 ;
+    dd:valueOfProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum> a skos:ConceptScheme,
+        dd:EnumerationScheme ;
+    rdfs:label "Raumnutzung SIA 2024 Code"@de,
+        "Room usage SIA 2024 code"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:notation "IFMA_V_31030008" ;
+    skos:prefLabel "Raumnutzung SIA 2024 Code"@de,
+        "Room usage SIA 2024 code"@en ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationSchemeForProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-2024-2021> ;
+    dd:hasEnumerationValue <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0001-1-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0002-1-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0003-2-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0004-2-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0005-3-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0006-3-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0007-3-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0008-3-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0009-4-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0010-4-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0011-4-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0012-4-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0013-4-05>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0014-5-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0015-5-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0016-5-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0017-6-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0018-6-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0019-6-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0020-6-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0021-7-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0022-7-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0023-7-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0024-8-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0025-8-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0026-8-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0027-9-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0028-9-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0029-9-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0030-10-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0031-11-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0032-11-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0033-11-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0034-12-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0035-12-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0036-12-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0037-12-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0038-12-05>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0039-12-06>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0040-12-07>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0041-12-08>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0042-12-09>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0043-12-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0044-12-11>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0045-12-12> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-2024-2021> a rdf:Property ;
+    rdfs:label "SIA 2024:2001 Raumnutzung"@de,
+        "SIA_2024_2021"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdfs:comment "Data type: STRING" ;
+    skos:definition "Klassifizierung gemäss SIA 2024 / 2021"@de,
+        "Classification according to SIA 2024 / 2021"@en ;
+    skos:related <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0001-1-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0002-1-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0003-2-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0004-2-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0005-3-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0006-3-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0007-3-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0008-3-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0009-4-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0010-4-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0011-4-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0012-4-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0013-4-05>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0014-5-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0015-5-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0016-5-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0017-6-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0018-6-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0019-6-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0020-6-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0021-7-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0022-7-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0023-7-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0024-8-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0025-8-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0026-8-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0027-9-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0028-9-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0029-9-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0030-10-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0031-11-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0032-11-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0033-11-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0034-12-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0035-12-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0036-12-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0037-12-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0038-12-05>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0039-12-06>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0040-12-07>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0041-12-08>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0042-12-09>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0043-12-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0044-12-11>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0045-12-12> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:hasAllowedValue <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0001-1-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0002-1-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0003-2-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0004-2-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0005-3-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0006-3-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0007-3-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0008-3-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0009-4-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0010-4-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0011-4-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0012-4-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0013-4-05>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0014-5-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0015-5-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0016-5-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0017-6-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0018-6-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0019-6-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0020-6-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0021-7-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0022-7-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0023-7-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0024-8-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0025-8-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0026-8-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0027-9-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0028-9-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0029-9-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0030-10-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0031-11-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0032-11-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0033-11-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0034-12-01>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0035-12-02>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0036-12-03>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0037-12-04>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0038-12-05>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0039-12-06>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0040-12-07>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0041-12-08>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0042-12-09>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0043-12-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0044-12-11>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum/values/0045-12-12> ;
+    dd:requiredByTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-2024-2021> ;
+    dd:usesEnumerationScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/documents/kbob-dk-fm-i14y-csv> a dd:Document,
+        schema:CreativeWork ;
+    rdfs:label "KBOB DK FM_i14y.csv"@de,
+        "KBOB DK FM_i14y.csv"@en ;
+    dct:identifier "kbob-dk-fm-i14y-csv" ;
+    dct:modified "2026-06-30T12:00:00Z" ;
+    dct:publisher "KBOB" ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    skos:prefLabel "KBOB DK FM_i14y.csv"@de,
+        "KBOB DK FM_i14y.csv"@en ;
+    prov:wasAttributedTo "KBOB" ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
+    dd:revision "2026" ;
+    dd:status "Candidate" .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> a skos:ConceptScheme,
+        dd:EnumerationScheme ;
+    rdfs:label "Flächenart SIA 416 Code"@de,
+        "Area type SIA 416 code"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    skos:notation "IFMA_V_31030004" ;
+    skos:prefLabel "Flächenart SIA 416 Code"@de,
+        "Area type SIA 416 code"@en ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:enumerationSchemeForProperty <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> ;
+    dd:hasEnumerationValue <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0002-1-2-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0003-1-2-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0004-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0005-2-1-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0006-2-1-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0007-2-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0008-2-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0009-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0010-3-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0011-3-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0012-3-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0013-airspace>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0014-roof>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0015-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0016-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0017-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0018-4> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/sia-416-2003> a rdf:Property ;
+    rdfs:label "SIA 416:2003 Flächenart"@de,
+        "SIA_416_2003"@en ;
+    dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    rdfs:comment "Data type: STRING" ;
+    skos:definition "Klassifizierung gemäss SIA 416 / 2003"@de,
+        "Classification according to SIA 416 / 2003"@en ;
+    skos:related <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0002-1-2-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0003-1-2-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0004-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0005-2-1-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0006-2-1-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0007-2-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0008-2-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0009-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0010-3-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0011-3-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0012-3-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0013-airspace>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0014-roof>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0015-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0016-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0017-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0018-4> ;
+    prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
+    dd:hasAllowedValue <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0002-1-2-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0003-1-2-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0004-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0005-2-1-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0006-2-1-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0007-2-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0008-2-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0009-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0010-3-1-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0011-3-1-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0012-3-1-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0013-airspace>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0014-roof>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0015-1>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0016-2>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0017-3>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0018-4> ;
+    dd:requiredByTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0006-site-area-ifma-areamgmt/sia-416-2003>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0007-surrounding-area-ifma-areamgmt/sia-416-2003>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0008-gross-floor-area-ifma-areamgmt/sia-416-2003>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-416-2003>,
+        <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0010-external-room-ifma-areamgmt/sia-416-2003> ;
+    dd:usesEnumerationScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> .
+

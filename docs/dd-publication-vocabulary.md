@@ -31,6 +31,12 @@ Die Publikation verwendet etablierte Vokabulare zuerst:
   - ein einzelner Wert innerhalb eines Enumeration Schemes
 - `dd:AllowedValue`
   - Rueckwaertskompatibler Typ fuer einzelne erlaubte Werte; derzeit parallel zu `dd:EnumerationValue`
+- `dd:Document`
+  - ein Dokumenteintrag aus dem Tab `Documents`
+- `dd:DataTemplate`
+  - eine publizierte Data-Template-Zeile aus dem Tab `Data_Template`
+- `dd:PropertyRequirement`
+  - eine kontextuelle Property-Anforderung innerhalb eines Data Templates; n-ary Ressource zwischen Data Template, Class und Property
 
 ## Properties
 
@@ -42,8 +48,26 @@ Die Publikation verwendet etablierte Vokabulare zuerst:
   - Dictionary -> Group of Properties
 - `dd:hasEnumerationScheme`
   - Dictionary -> Enumeration Scheme
+- `dd:hasDocument`
+  - Dictionary -> Document
+- `dd:hasDataTemplate`
+  - Dictionary oder Class -> Data Template
+- `dd:appliesToClass`
+  - Data Template oder Property Requirement -> Class
+- `dd:includesGroupOfProperties`
+  - Data Template -> Group of Properties
+- `dd:referencesDocument`
+  - Data Template, Property Requirement oder Class -> Document
+- `dd:hasPropertyRequirement`
+  - Data Template -> Property Requirement
+- `dd:requirementOfDataTemplate`
+  - Property Requirement -> Data Template
+- `dd:requiresProperty`
+  - Property Requirement -> Property
+- `dd:requiredByTemplate`
+  - Property -> Property Requirement
 - `dd:usesEnumerationScheme`
-  - Property -> Enumeration Scheme
+  - Property oder Property Requirement -> Enumeration Scheme
 - `dd:enumerationSchemeForProperty`
   - Enumeration Scheme -> Property
 - `dd:hasEnumerationValue`
@@ -54,6 +78,18 @@ Die Publikation verwendet etablierte Vokabulare zuerst:
   - Enumeration Value -> Property
 - `dd:enumerationPosition`
   - Enumeration Value -> 1-basierte Listenposition im aktuellen Workbook
+- `dd:allowedValue`
+  - Property Requirement -> Enumeration Value; kontextuelle erlaubte Teilmenge
+- `dd:usesCompleteValueScheme`
+  - Property Requirement -> Boolean; `true` wenn die Property ein Enumeration Scheme besitzt und die Matrixzelle `x` keine Teilmenge einschraenkt
+- `dd:inclusionMarker`
+  - Property Requirement -> urspruenglicher Matrixzellwert (`x` oder Listenliteral)
+- `dd:requirementLevel`
+  - Property Requirement -> derzeit `included`; nicht als mandatory/minCount interpretieren
+- `dd:contextualDatatype`
+  - Property Requirement -> DataType aus der allgemeinen Property-Definition
+- `dd:contextualUnit`
+  - Property Requirement -> QUDT-URI oder Einheitsliteral aus der allgemeinen Property-Definition
 - `dd:inGroupOfProperties`
   - Property -> Group of Properties
 - `dd:groupContainsProperty`
@@ -151,3 +187,89 @@ Jeder einzelne Enumeration Value sollte im Workbook eine eigene stabile ID oder 
 ## Design-Absicht
 
 Dieses Vokabular ist bewusst minimal gehalten, damit ein schlank publiziertes Data Dictionary einfach abfragbar bleibt und dennoch ausreichend reichhaltig ist, um spaeter gegen IFC-abgeleitete RDF-Graphen validiert werden zu koennen.
+
+## Data Templates und Property Requirements
+
+Die `Data_Template`-Matrix wird als deskriptiver RDF-Layer publiziert. Eine Matrixzeile wird zu einer `dd:DataTemplate`-Ressource. Jede nicht-leere Property-Zelle in dieser Zeile wird zu einer eigenen `dd:PropertyRequirement`-Ressource.
+
+Das ist bewusst ein n-ary Modell:
+
+```text
+DataTemplate
+  dd:appliesToClass Class ;
+  dd:includesGroupOfProperties Group ;
+  dd:referencesDocument Document ;
+  dd:hasPropertyRequirement PropertyRequirement .
+
+PropertyRequirement
+  dd:requiresProperty Property ;
+  dd:usesEnumerationScheme EnumerationScheme ;
+  dd:allowedValue EnumerationValue .
+```
+
+Die Anforderung wird nicht als direkte Class-Property-Kante modelliert, weil Matrixzellen kontextuelle Semantik enthalten: Einbindung, Wertlisten-Teilmenge, Datentyp-/Einheitskontext, Governance und spaeter IDS-relevante Informationen.
+
+### Matrixzellen
+
+- Leere Zelle: keine `dd:PropertyRequirement`.
+- `x`: Property ist im Data Template enthalten. Wenn die allgemeine Property ein Enumeration Scheme besitzt, wird `dd:usesEnumerationScheme` auf der Requirement-Ressource gesetzt und `dd:usesCompleteValueScheme true` publiziert.
+- JSON-Liste, z. B. `["A", "B"]`: Property ist enthalten und auf eine Teilmenge der bestehenden Enumeration Values eingeschraenkt. Die Requirement-Ressource erhaelt `dd:usesCompleteValueScheme false` und je Wert ein `dd:allowedValue`.
+
+Die allgemeine Property behaelt immer ihre vollstaendige Enumeration-Scheme-Verknuepfung. Requirement-Level-Values sind nur der kontextuelle Ausschnitt.
+
+### Data-Template-URI-Strategie
+
+Das Workbook enthaelt derzeit keine expliziten Data-Template-IDs. Fuer das MVP wird eine deterministische URI aus Matrixzeile, Class-ID und GoP-ID gebildet:
+
+```text
+.../data-templates/{row}-{class-id}-{gop-id-or-no-group}
+```
+
+Beispiel:
+
+```text
+https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/data-templates/0009-room-ifma-areamgmt
+```
+
+Diese Strategie ist stabil, solange die Matrixzeilen nicht umsortiert werden. Langfristig sollte das Workbook eine explizite Data-Template-ID oder Assignment-ID erhalten.
+
+Property-Requirement-URIs liegen unter:
+
+```text
+.../property-requirements/{data-template-id}/{property-id}
+```
+
+### Groups of Properties
+
+`GroupOfProperties` bleibt eine eigenstaendige Ressource. Die Matrixspalte fuer GoP wird als `dd:includesGroupOfProperties` am Data Template und als `dd:inGroupOfProperties` an den Property Requirements publiziert.
+
+Es wird nicht inferiert, dass die Auswahl einer Gruppe automatisch alle Properties der Gruppe einschliesst. Requirements entstehen nur aus explizit nicht-leeren Property-Zellen. Dadurch koennen Teilmengen einer Gruppe ohne doppelte Requirements beschrieben werden.
+
+### Documents
+
+Dokumente aus `Documents` werden als `dd:Document` und `schema:CreativeWork` publiziert. `schema:CreativeWork` wurde gewaehlt, weil die Workbook-Eintraege allgemeine normative oder referenzierende Werke beschreiben koennen und nicht zwingend Web-Dokumente mit Dateizugriff sind. Dokumente erhalten Labels, Identifier, Publisher, Revision, Status, Version date, Provenienz und Dataset-Quelle, soweit vorhanden.
+
+Data Templates verweisen mit `dd:referencesDocument` auf ausgewaehlte Dokumente. Wenn das Workbook keine Dokumentrolle unterscheidet, wird keine Rolle erfunden.
+
+### Cardinality und IDS-Gap
+
+`x` bedeutet im aktuellen RDF nur `included`, nicht mandatory. Es wird kein `minCount = 1` abgeleitet. Das Workbook liefert aktuell keine verlustfreie Semantik fuer:
+
+- required versus optional;
+- min/max cardinality;
+- exactly-one;
+- repeatability;
+- Dokumentrolle einer Anforderung;
+- explizite Data-Template-ID;
+- explizite Property-Requirement-ID;
+- explizite Value-ID fuer Enumeration Values.
+
+Diese Felder sind fuer einen spaeteren IDS-Export relevant und sollten im Template ergaenzt werden, bevor SHACL/IDS als normative Ausgabe stabilisiert wird.
+
+### Override-Aufloesung
+
+Override-Werte werden nur auf bereits publizierte Enumeration Values gemappt. Es werden keine neuen Values aus Matrixzellen erzeugt.
+
+Die Aufloesung sucht ueber die kanonischen Werte und vorhandene mehrsprachige Labels derselben Enumeration Values. Dadurch erzeugen deutsche oder andere Sprachlabels keine getrennten Ressourcen.
+
+Wenn ein Override-Wert auf mehrere bestehende Enumeration Values passt, weil die Quelle doppelte lexikalische Werte enthaelt und noch keine Value-IDs besitzt, werden alle passenden bestehenden Values verknuepft und eine Mapper-Warnung geschrieben. Sobald value-level IDs existieren, sollte die Matrix auf diese IDs referenzieren.
