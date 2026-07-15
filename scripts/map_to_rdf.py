@@ -224,6 +224,7 @@ def build_enumerations(values_rows, sheet_name='Values'):
         scheme = {
             'id': enum_id,
             'code': str(row.get('Enumeration-Code') or '').strip(),
+            'status': str(row.get('Status') or '').strip(),
             'designation_en': designation_en,
             'labels': {
                 'en': row.get('Designation (EN)'),
@@ -664,6 +665,8 @@ def main(argv=None):
             )
             if scheme['code']:
                 g.add((scheme_uri, SKOS.notation, Literal(scheme['code'])))
+            if scheme['status']:
+                g.add((scheme_uri, DD.status, Literal(scheme['status'])))
             add_resource_links(g, scheme_uri, dataset_uri)
             for value in scheme['values']:
                 val_uri = mint_value_uri(base, scheme['id'], value['position'], value['canonical'])

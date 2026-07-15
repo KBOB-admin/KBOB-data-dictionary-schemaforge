@@ -46,6 +46,8 @@ class EnumerationMappingTests(unittest.TestCase):
         self.assertIn((value, SKOS.inScheme, scheme), graph)
         self.assertIn((prop, DD.usesEnumerationScheme, scheme), graph)
         self.assertIn((prop, DD.hasAllowedValue, value), graph)
+        self.assertIn((scheme, DD.status, Literal('Preview')), graph)
+        self.assertNotIn((value, DD.status, Literal('Preview')), graph)
         self.assertEqual(len(list(graph.triples((None, SKOS.member, None)))), 0)
 
     def test_actual_workbooks_publish_data_templates_requirements_groups_and_documents(self):
