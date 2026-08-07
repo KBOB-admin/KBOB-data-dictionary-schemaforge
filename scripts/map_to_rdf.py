@@ -25,6 +25,18 @@ def slug(s):
     return s or 'item'
 
 
+def version_segment(value):
+    text = str(value or '').strip()
+    if re.fullmatch(r'\d+\.\d+\.\d+', text):
+        return text
+    return slug(text) if text else ''
+
+
+def has_version_segment(uri):
+    tail = str(uri or '').rstrip('/').rsplit('/', 1)[-1]
+    return bool(re.fullmatch(r'\d+\.\d+\.\d+', tail))
+
+
 def rowdict(ws, header_row=1, data_start=8):
     headers={str(ws.cell(header_row,c).value).strip():c for c in range(1,ws.max_column+1) if ws.cell(header_row,c).value}
     rows=[]
@@ -188,11 +200,21 @@ def build_enumerations(values_rows, sheet_name='Values'):
     by_id = {}
     diagnostics = []
     for row in values_rows:
-        enum_id = require_id(row, 'Enumeration-ID', sheet_name)
         row_no = row.get('_row', '?')
         designation_en = str(row.get('Designation (EN)') or '').strip()
         if not designation_en:
             raise ValueError(f'{sheet_name} row {row_no} is missing required Designation (EN)')
+        # Allow missing Enumeration-ID by generating a stable id from the English designation
+        enum_id = str(row.get('Enumeration-ID') or '').strip()
+        if not enum_id:
+            base_candidate = slug(designation_en) if designation_en else f'generated-{row_no}'
+            candidate = base_candidate
+            suffix = 1
+            while candidate in by_id:
+                suffix += 1
+                candidate = f"{base_candidate}-{suffix}"
+            enum_id = candidate
+            diagnostics.append(f'{sheet_name} row {row_no}: WARNING generated missing Enumeration-ID -> {enum_id}')
         if enum_id in by_id:
             raise ValueError(f'{sheet_name} row {row_no} duplicates Enumeration-ID: {enum_id}')
         lists = {
@@ -259,36 +281,88 @@ def build_matrix_model(wb_data, wb_formula, path, base, dataset_uri, classes, pr
     diagnostics = []
 
     class_lookup = {}
+    class_ids_seen = set()
     for row in classes:
-        class_id = require_id(row, 'Class-ID', 'Classes')
+        row_no = row.get('_row', '?')
+        class_id = str(row.get('Class-ID') or '').strip()
+        if not class_id:
+            class_name_en = str(row.get('Designation (EN)') or row.get('Bezeichnung (DE)') or '').strip()
+            base_candidate = slug(class_name_en) if class_name_en else f'generated-class-{row_no}'
+            candidate = base_candidate
+            suffix = 1
+            while candidate in class_ids_seen:
+                suffix += 1
+                candidate = f"{base_candidate}-{suffix}"
+            class_id = candidate
+            diagnostics.append(f'{Path(path).name}: Classes row {row_no}: WARNING generated missing Class-ID -> {class_id}')
         uri = mint_from_id(base, 'classes', class_id)
+        class_ids_seen.add(class_id)
         add_lookup(class_lookup, [
             class_id, row.get('Class-Code'), row.get('Designation (EN)'), row.get('Bezeichnung (DE)'),
             row.get('Désignation (FR)'), row.get('Designazione (IT)')
         ], {'row': row, 'id': class_id, 'uri': uri})
 
     prop_lookup = {}
+    prop_ids_seen = set()
     for row in props:
-        prop_id = require_id(row, 'Property-ID', 'Properties')
+        row_no = row.get('_row', '?')
+        prop_id = str(row.get('Property-ID') or '').strip()
+        if not prop_id:
+            prop_name_en = str(row.get('Designation (EN)') or row.get('Bezeichnung (DE)') or '').strip()
+            base_candidate = slug(prop_name_en) if prop_name_en else f'generated-prop-{row_no}'
+            candidate = base_candidate
+            suffix = 1
+            while candidate in prop_ids_seen:
+                suffix += 1
+                candidate = f"{base_candidate}-{suffix}"
+            prop_id = candidate
+            diagnostics.append(f'{Path(path).name}: Properties row {row_no}: WARNING generated missing Property-ID -> {prop_id}')
         uri = mint_from_id(base, 'properties', prop_id)
+        prop_ids_seen.add(prop_id)
         add_lookup(prop_lookup, [
             prop_id, row.get('Property-Code'), row.get('Designation (EN)'), row.get('Bezeichnung (DE)'),
             row.get('Désignation (FR)'), row.get('Designazione (IT)')
         ], {'row': row, 'id': prop_id, 'uri': uri})
 
     gop_lookup = {}
+    gop_ids_seen = set()
     for row in gops:
-        gop_id = require_id(row, 'GoP-ID', 'GroupOfProperties')
+        row_no = row.get('_row', '?')
+        gop_id = str(row.get('GoP-ID') or '').strip()
+        if not gop_id:
+            gop_name_en = str(row.get('Designation (EN)') or row.get('Description (EN)') or '').strip()
+            base_candidate = slug(gop_name_en) if gop_name_en else f'generated-gop-{row_no}'
+            candidate = base_candidate
+            suffix = 1
+            while candidate in gop_ids_seen:
+                suffix += 1
+                candidate = f"{base_candidate}-{suffix}"
+            gop_id = candidate
+            diagnostics.append(f'{Path(path).name}: GroupOfProperties row {row_no}: WARNING generated missing GoP-ID -> {gop_id}')
         uri = mint_from_id(base, 'group-of-properties', gop_id)
+        gop_ids_seen.add(gop_id)
         add_lookup(gop_lookup, [
-            gop_id, row.get('GoP-Code'), row.get('Designation (EN)'), row.get('Beschreibung (DE)'),
-            row.get('Description (FR)'), row.get('Descrizione (IT)')
+            gop_id, row.get('GoP-Code'), row.get('Designation (EN)'), row.get('Bezeichnung (DE)'),
+            row.get('Désignation (FR)'), row.get('Designazione (IT)')
         ], {'row': row, 'id': gop_id, 'uri': uri})
 
     doc_lookup = {}
+    doc_ids_seen = set()
     for row in docs:
-        doc_id = require_id(row, 'Document-ID', 'Documents')
+        row_no = row.get('_row', '?')
+        doc_id = str(row.get('Document-ID') or '').strip()
+        if not doc_id:
+            doc_name_en = str(row.get('DocumentName (EN)') or row.get('Bezeichnung (DE)') or '').strip()
+            base_candidate = slug(doc_name_en) if doc_name_en else f'generated-doc-{row_no}'
+            candidate = base_candidate
+            suffix = 1
+            while candidate in doc_ids_seen:
+                suffix += 1
+                candidate = f"{base_candidate}-{suffix}"
+            doc_id = candidate
+            diagnostics.append(f'{Path(path).name}: Documents row {row_no}: WARNING generated missing Document-ID -> {doc_id}')
         uri = mint_from_id(base, 'documents', doc_id)
+        doc_ids_seen.add(doc_id)
         add_lookup(doc_lookup, [
             doc_id, row.get('Document-Code'), row.get('DocumentName (EN)'), row.get('Bezeichnung (DE)'),
             row.get('Désignation (FR)'), row.get('Designazione (IT)')
@@ -476,6 +550,23 @@ def header_metadata(wb):
     return meta
 
 
+def resource_base_from_header(header, dict_prefix=''):
+    dictionary_uri = str(header.get('DictionaryUri') or '').strip().rstrip('/')
+    version = version_segment(header.get('DictionaryVersion'))
+    if dictionary_uri.startswith('https://lindas.admin.ch/fobl/kbob/'):
+        family_base = dictionary_uri
+    else:
+        family_base = LINDAS_BASE if not dict_prefix else f"{LINDAS_BASE}/{dict_prefix}"
+    if version and not has_version_segment(family_base):
+        return f'{family_base}/{version}'
+    return family_base
+
+
+def legacy_prefix_for_path(path):
+    name = Path(path).name.casefold()
+    return BDCH if 'area' in name or 'areamgmt' in name else ''
+
+
 def workbook_resources(wb, wb_path, dict_prefix=''):
     classes = rowdict(wb['Classes']) if 'Classes' in wb.sheetnames else []
     props = rowdict(wb['Properties']) if 'Properties' in wb.sheetnames else []
@@ -483,8 +574,9 @@ def workbook_resources(wb, wb_path, dict_prefix=''):
     vals = rowdict(wb['Values']) if 'Values' in wb.sheetnames else []
     docs = rowdict(wb['Documents']) if 'Documents' in wb.sheetnames else []
     concept_rel = rowdict(wb['ConceptRelation'], header_row=2, data_start=5) if 'ConceptRelation' in wb.sheetnames else []
+    header = header_metadata(wb)
     dataset_uri = dataset_uri_for_workbook(wb_path)
-    base = LINDAS_BASE if not dict_prefix else f"{LINDAS_BASE}/{dict_prefix}"
+    base = resource_base_from_header(header, dict_prefix)
     return classes, props, gops, vals, docs, concept_rel, dataset_uri, base
 
 
@@ -524,15 +616,17 @@ def add_ifc_class_alignment(g, uri, row):
 
 def main(argv=None):
     p=argparse.ArgumentParser()
-    p.add_argument('kbob')
-    p.add_argument('areamgmt')
+    p.add_argument('workbooks', nargs='*', default=[
+        'templates/Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx',
+        'templates/Strukturvorlage_AreaMgmt_v0.5.0.xlsx',
+    ])
     p.add_argument('--out', default='out')
     args=p.parse_args(argv)
 
-    kbob=load_workbook(args.kbob,data_only=True)
-    area=load_workbook(args.areamgmt,data_only=True)
-    kbob_formula=load_workbook(args.kbob,data_only=False)
-    area_formula=load_workbook(args.areamgmt,data_only=False)
+    workbooks = [
+        (load_workbook(path, data_only=True), load_workbook(path, data_only=False), path, legacy_prefix_for_path(path))
+        for path in args.workbooks
+    ]
     outdir=Path(args.out)
     outdir.mkdir(parents=True,exist_ok=True)
 
@@ -549,7 +643,7 @@ def main(argv=None):
 
     diagnostics = []
     # process both workbooks
-    for wb, wb_formula, path, prefix in [(kbob, kbob_formula, args.kbob, ''), (area, area_formula, args.areamgmt, BDCH)]:
+    for wb, wb_formula, path, prefix in workbooks:
         classes, props, gops, vals, docs, concept_rel, dataset_uri, base = workbook_resources(wb, path, prefix)
         header = header_metadata(wb)
         enum_schemes, enum_by_designation, enum_diagnostics = build_enumerations(vals)
@@ -577,10 +671,25 @@ def main(argv=None):
         class_uri_by_code = {}
         gop_uri_by_code = {}
         document_uri_by_name = {}
+        document_ids_seen = set()
 
         for doc in docs:
-            doc_id = require_id(doc, 'Document-ID', 'Documents')
+            row_no = doc.get('_row', '?')
+            doc_id = str(doc.get('Document-ID') or '').strip()
+            if not doc_id:
+                # generate a stable document id from English name or German label when missing
+                doc_name_en = str(doc.get('DocumentName (EN)') or doc.get('Bezeichnung (DE)') or '').strip()
+                base_candidate = slug(doc_name_en) if doc_name_en else f'generated-doc-{row_no}'
+                candidate = base_candidate
+                suffix = 1
+                while candidate in document_ids_seen:
+                    suffix += 1
+                    candidate = f"{base_candidate}-{suffix}"
+                doc_id = candidate
+                diagnostics.append(f'{Path(path).name}: Documents row {row_no}: WARNING generated missing Document-ID -> {doc_id}')
             doc_code = str(doc.get('Document-Code') or '').strip()
+            # mark as seen to avoid collisions
+            document_ids_seen.add(doc_id)
             doc_uri = mint_from_id(base, 'documents', doc_id)
             for key in [
                 doc_id, doc_code, doc.get('DocumentName (EN)'), doc.get('Bezeichnung (DE)'),
@@ -610,7 +719,19 @@ def main(argv=None):
             add_resource_links(g, doc_uri, dataset_uri, doc_uri=doc.get('GUID/URI'))
 
         for c in classes:
-            class_id = require_id(c, 'Class-ID', 'Classes')
+            row_no = c.get('_row', '?')
+            class_id = str(c.get('Class-ID') or '').strip()
+            if not class_id:
+                # generate a stable class id from English designation or German label when missing
+                class_name_en = str(c.get('Designation (EN)') or c.get('Bezeichnung (DE)') or '').strip()
+                base_candidate = slug(class_name_en) if class_name_en else f'generated-class-{row_no}'
+                candidate = base_candidate
+                suffix = 1
+                while candidate in class_uri_by_code:
+                    suffix += 1
+                    candidate = f"{base_candidate}-{suffix}"
+                class_id = candidate
+                diagnostics.append(f'{Path(path).name}: Classes row {row_no}: WARNING generated missing Class-ID -> {class_id}')
             code = str(c.get('Class-Code') or '').strip()
             uri = mint_from_id(base, 'classes', class_id)
             class_uri_by_code[class_id] = uri
@@ -635,7 +756,18 @@ def main(argv=None):
                 g.add((uri, DD.referencesDocument, document_uri_by_name[norm(related_doc)]))
 
         for gop in gops:
-            gop_id = require_id(gop, 'GoP-ID', 'GroupOfProperties')
+            row_no = gop.get('_row', '?')
+            gop_id = str(gop.get('GoP-ID') or '').strip()
+            if not gop_id:
+                gop_name_en = str(gop.get('Designation (EN)') or gop.get('Description (EN)') or '').strip()
+                base_candidate = slug(gop_name_en) if gop_name_en else f'generated-gop-{row_no}'
+                candidate = base_candidate
+                suffix = 1
+                while candidate in gop_uri_by_code:
+                    suffix += 1
+                    candidate = f"{base_candidate}-{suffix}"
+                gop_id = candidate
+                diagnostics.append(f'{Path(path).name}: GroupOfProperties row {row_no}: WARNING generated missing GoP-ID -> {gop_id}')
             gcode = str(gop.get('GoP-Code') or '').strip()
             gop_uri = mint_from_id(base, 'group-of-properties', gop_id)
             gop_uri_by_code[gop_id] = gop_uri
@@ -643,7 +775,26 @@ def main(argv=None):
                 gop_uri_by_code[gcode] = gop_uri
             g.add((gop_uri, RDF.type, DD.GroupOfProperties))
             g.add((dataset_uri, DD.hasGroupOfProperties, gop_uri))
-            add_labels(g, gop_uri, gop.get('Beschreibung (DE)'), gop.get('Designation (EN)'), gop.get('Description (FR)'), gop.get('Descrizione (IT)'))
+            add_pref_labels(
+                g,
+                gop_uri,
+                de=gop.get('Bezeichnung (DE)'),
+                en=gop.get('Designation (EN)'),
+                fr=gop.get('Désignation (FR)'),
+                it=gop.get('Designazione (IT)'),
+            )
+            if gop.get('Beschreibung (DE)'):
+                g.add((gop_uri, SKOS.definition, Literal(str(gop.get('Beschreibung (DE)')), lang='de')))
+                g.add((gop_uri, DCTERMS.description, Literal(str(gop.get('Beschreibung (DE)')), lang='de')))
+            if gop.get('Description (EN)'):
+                g.add((gop_uri, SKOS.definition, Literal(str(gop.get('Description (EN)')), lang='en')))
+                g.add((gop_uri, DCTERMS.description, Literal(str(gop.get('Description (EN)')), lang='en')))
+            if gop.get('Description (FR)'):
+                g.add((gop_uri, SKOS.definition, Literal(str(gop.get('Description (FR)')), lang='fr')))
+                g.add((gop_uri, DCTERMS.description, Literal(str(gop.get('Description (FR)')), lang='fr')))
+            if gop.get('Descrizione (IT)'):
+                g.add((gop_uri, SKOS.definition, Literal(str(gop.get('Descrizione (IT)')), lang='it')))
+                g.add((gop_uri, DCTERMS.description, Literal(str(gop.get('Descrizione (IT)')), lang='it')))
             add_resource_links(g, gop_uri, dataset_uri)
 
         value_uris_by_scheme_id = {}
@@ -701,7 +852,18 @@ def main(argv=None):
         property_enum_schemes = {}
         enum_value_lookup_by_property = {}
         for prop in props:
-            prop_id = require_id(prop, 'Property-ID', 'Properties')
+            row_no = prop.get('_row', '?')
+            prop_id = str(prop.get('Property-ID') or '').strip()
+            if not prop_id:
+                prop_name_en = str(prop.get('Designation (EN)') or prop.get('Bezeichnung (DE)') or '').strip()
+                base_candidate = slug(prop_name_en) if prop_name_en else f'generated-prop-{row_no}'
+                candidate = base_candidate
+                suffix = 1
+                while candidate in property_uri_by_code:
+                    suffix += 1
+                    candidate = f"{base_candidate}-{suffix}"
+                prop_id = candidate
+                diagnostics.append(f'{Path(path).name}: Properties row {row_no}: WARNING generated missing Property-ID -> {prop_id}')
             code = str(prop.get('Property-Code') or '').strip()
             uri = mint_from_id(base, 'properties', prop_id)
             property_uri_by_code[prop_id] = uri

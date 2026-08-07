@@ -124,6 +124,22 @@ Enumeration Schemes werden als `skos:ConceptScheme` modelliert. Einzelwerte sind
 
 Multilinguale Labels werden auf Schemes und Values als `skos:prefLabel` publiziert. Aus praktischen Explorer-Gruenden wird derselbe Labelwert zusaetzlich als `rdfs:label` ausgegeben. `skos:notation` wird fuer vorhandene Codes oder den kanonischen Einzelwert verwendet. `rdf:value` wird nur fuer sicher erkennbare numerische oder boolesche Werte gesetzt.
 
+## Versionierte Ressourcen-URIs
+
+`Header.DictionaryUri` beschreibt die unversionierte Dictionary-Familie. Fuer publizierte LINDAS-Ressourcen wird daraus zusammen mit `Header.DictionaryVersion` eine versionierte Ressourcenbasis gebildet:
+
+```text
+{DictionaryUri}/{DictionaryVersion}
+```
+
+Beispiel:
+
+```text
+https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0
+```
+
+Alle Klassen, Properties, Data Templates, Enumeration Schemes und Enumeration Values werden unter dieser versionierten Basis gemintet. Damit bleiben vertraglich referenzierte Versionen stabil und koennen parallel zu spaeteren Dictionary-Versionen publiziert bleiben. Falls `DictionaryUri` bereits mit einem SemVer-Segment endet, wird die Version nicht erneut angehaengt.
+
 ## URI-Strategie fuer Enumeration Values
 
 Das Workbook besitzt derzeit keine expliziten stabilen IDs fuer einzelne Enumeration Values. Fuer das MVP werden Value-URIs deshalb deterministisch aus Enumeration-ID, Listenposition und kanonischem Wert-Token gebildet:
@@ -135,7 +151,7 @@ Das Workbook besitzt derzeit keine expliziten stabilen IDs fuer einzelne Enumera
 Beispiel:
 
 ```text
-https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2
+https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/area-type-sia-416-code-enum/values/0001-1-2
 ```
 
 Eigenschaften dieser Strategie:
@@ -160,29 +176,29 @@ Jeder einzelne Enumeration Value sollte im Workbook eine eigene stabile ID oder 
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
-<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/predefinedtype-enum>
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum>
   a skos:ConceptScheme, dd:EnumerationScheme ;
   skos:prefLabel "PredefinedType"@en, "Vordefinierter Typ"@de ;
   skos:notation "IFMA_V_31030000" ;
   dd:hasEnumerationValue
-    <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/predefinedtype-enum/values/0001-gfa>,
-    <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/predefinedtype-enum/values/0002-parking>,
-    <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/predefinedtype-enum/values/0003-userdefined> ;
+    <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum/values/0001-gfa>,
+    <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum/values/0002-parking>,
+    <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum/values/0003-userdefined> ;
   dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
   prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> .
 
-<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/predefinedtype-enum/values/0002-parking>
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum/values/0002-parking>
   a skos:Concept, dd:EnumerationValue, dd:AllowedValue ;
-  skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/predefinedtype-enum> ;
+  skos:inScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum> ;
   skos:prefLabel "PARKING"@en, "PARKING"@de ;
   skos:notation "PARKING" ;
   dd:enumerationPosition 2 ;
   dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> .
 
-<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/predefinedtype>
+<https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/properties/predefinedtype>
   a rdf:Property ;
-  dd:usesEnumerationScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/predefinedtype-enum> ;
-  dd:hasAllowedValue <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/predefinedtype-enum/values/0002-parking> .
+  dd:usesEnumerationScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum> ;
+  dd:hasAllowedValue <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum/values/0002-parking> .
 ```
 
 ## Alignment-Regeln
@@ -248,7 +264,7 @@ Das Workbook enthaelt derzeit keine expliziten Data-Template-IDs. Fuer das MVP w
 Beispiel:
 
 ```text
-https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/data-templates/0009-room-ifma-areamgmt
+https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/data-templates/0009-room-ifma-areamgmt
 ```
 
 Diese Strategie ist stabil, solange die Matrixzeilen nicht umsortiert werden. Langfristig sollte das Workbook eine explizite Data-Template-ID oder Assignment-ID erhalten.

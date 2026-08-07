@@ -15,7 +15,8 @@ import map_to_rdf  # noqa: E402
 
 
 DD = Namespace('https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/')
-BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm/bdch'
+KBOB_BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm/0.3.0'
+BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0'
 
 
 class EnumerationMappingTests(unittest.TestCase):
@@ -31,6 +32,24 @@ class EnumerationMappingTests(unittest.TestCase):
         graph = Graph()
         graph.parse(out / 'combined.ttl')
         return tmp, graph
+
+    def test_resource_base_includes_dictionary_version(self):
+        header = {
+            'DictionaryUri': 'https://lindas.admin.ch/fobl/kbob/sbb/sbb_fdk_data_dictionary',
+            'DictionaryVersion': '3.0.0',
+        }
+        self.assertEqual(
+            map_to_rdf.resource_base_from_header(header),
+            'https://lindas.admin.ch/fobl/kbob/sbb/sbb_fdk_data_dictionary/3.0.0',
+        )
+        already_versioned = {
+            'DictionaryUri': 'https://lindas.admin.ch/fobl/kbob/sbb/sbb_fdk_data_dictionary/3.0.0',
+            'DictionaryVersion': '3.0.0',
+        }
+        self.assertEqual(
+            map_to_rdf.resource_base_from_header(already_versioned),
+            'https://lindas.admin.ch/fobl/kbob/sbb/sbb_fdk_data_dictionary/3.0.0',
+        )
 
     def test_actual_workbooks_publish_schemes_and_values(self):
         tmp, graph = self.export_actual_workbooks()
@@ -54,12 +73,13 @@ class EnumerationMappingTests(unittest.TestCase):
         tmp, graph = self.export_actual_workbooks()
         self.addCleanup(tmp.cleanup)
 
-        template = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/data-templates/0005-site-kbob-grundstuck-architekt')
-        class_uri = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/classes/site')
-        group_uri = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/group-of-properties/kbob-grundstuck-architekt')
-        document_uri = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/documents/kbob-dk-fm-i14y-csv')
-        req_guid = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0005-site-kbob-grundstuck-architekt/guid')
-        req_site_id = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/property-requirements/0005-site-kbob-grundstuck-architekt/site-id')
+        template = URIRef(f'{KBOB_BASE}/data-templates/0005-site-kbob-grundstuck-architekt')
+        class_uri = URIRef(f'{KBOB_BASE}/classes/site')
+        group_uri = URIRef(f'{KBOB_BASE}/group-of-properties/kbob-grundstuck-architekt')
+        document_uri = URIRef(f'{KBOB_BASE}/documents/kbob-dk-fm-i14y-csv')
+        req_guid = URIRef(f'{KBOB_BASE}/property-requirements/0005-site-kbob-grundstuck-architekt/guid')
+        req_site_id = URIRef(f'{KBOB_BASE}/property-requirements/0005-site-kbob-grundstuck-architekt/site-id')
+        prop_guid = URIRef(f'{KBOB_BASE}/properties/guid')
 
         self.assertIn((template, RDF.type, DD.DataTemplate), graph)
         self.assertIn((template, DD.appliesToClass, class_uri), graph)
@@ -68,6 +88,10 @@ class EnumerationMappingTests(unittest.TestCase):
         self.assertIn((document_uri, RDF.type, DD.Document), graph)
         self.assertIn((template, DD.hasPropertyRequirement, req_guid), graph)
         self.assertIn((req_guid, RDF.type, DD.PropertyRequirement), graph)
+        self.assertIn((req_guid, DD.requirementOfDataTemplate, template), graph)
+        self.assertIn((req_guid, DD.inGroupOfProperties, group_uri), graph)
+        self.assertIn((req_guid, DD.requiresProperty, prop_guid), graph)
+        self.assertIn((prop_guid, DD.requiredByTemplate, req_guid), graph)
         self.assertNotIn((template, DD.hasPropertyRequirement, req_site_id), graph)
 
     def test_dataset_uses_header_dictionary_name_and_source_workbook(self):
@@ -85,17 +109,35 @@ class EnumerationMappingTests(unittest.TestCase):
         tmp, graph = self.export_actual_workbooks()
         self.addCleanup(tmp.cleanup)
 
-        prop = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/properties/airconditioning')
+        prop = URIRef(f'{BASE}/properties/airconditioning')
         self.assertIn((prop, DD.datatype, Literal('BOOLEAN')), graph)
         self.assertIn((prop, DD.ifcDatatype, None), graph)
         self.assertIn((prop, DD.status, None), graph)
+
+    def test_group_of_properties_uses_designation_as_label_and_description_as_definition(self):
+        tmp, graph = self.export_actual_workbooks()
+        self.addCleanup(tmp.cleanup)
+
+        group = URIRef(f'{BASE}/group-of-properties/ifma-areamgmt')
+        description_de = Literal(
+            'Enthält alle flächenbezogenen Parameter gemäss Norm SIA 416. Sie definiert Hauptnutz-, Nebennutz- und Verkehrsflächen zur präzisen Steuerung beim Facility Management',
+            lang='de',
+        )
+
+        self.assertIn((group, RDF.type, DD.GroupOfProperties), graph)
+        self.assertIn((group, RDFS.label, Literal('IFMA_AreaMgmt', lang='en')), graph)
+        self.assertIn((group, SKOS.prefLabel, Literal('IFMA_AreaMgmt', lang='en')), graph)
+        self.assertNotIn((group, RDFS.label, description_de), graph)
+        self.assertNotIn((group, SKOS.prefLabel, description_de), graph)
+        self.assertIn((group, SKOS.definition, description_de), graph)
+        self.assertIn((group, DCTERMS.description, description_de), graph)
 
     def test_x_requirement_retains_property_level_enumeration(self):
         tmp, graph = self.export_actual_workbooks()
         self.addCleanup(tmp.cleanup)
 
-        requirement = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-2024-2021')
-        scheme = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/room-usage-sia-2024-code-enum')
+        requirement = URIRef(f'{BASE}/property-requirements/0009-room-ifma-areamgmt/sia-2024-2021')
+        scheme = URIRef(f'{BASE}/enumerations/room-usage-sia-2024-code-enum')
         self.assertIn((requirement, RDF.type, DD.PropertyRequirement), graph)
         self.assertIn((requirement, DD.usesEnumerationScheme, scheme), graph)
         self.assertIn((requirement, DD.usesCompleteValueScheme, None), graph)
@@ -105,9 +147,9 @@ class EnumerationMappingTests(unittest.TestCase):
         tmp, graph = self.export_actual_workbooks()
         self.addCleanup(tmp.cleanup)
 
-        requirement = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0007-surrounding-area-ifma-areamgmt/sia-416-2003')
-        scheme = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum')
-        value = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum/values/0001-1-2')
+        requirement = URIRef(f'{BASE}/property-requirements/0007-surrounding-area-ifma-areamgmt/sia-416-2003')
+        scheme = URIRef(f'{BASE}/enumerations/area-type-sia-416-code-enum')
+        value = URIRef(f'{BASE}/enumerations/area-type-sia-416-code-enum/values/0001-1-2')
         self.assertIn((requirement, DD.usesEnumerationScheme, scheme), graph)
         self.assertIn((requirement, DD.allowedValue, value), graph)
         self.assertIn((value, RDF.type, DD.EnumerationValue), graph)
@@ -136,7 +178,7 @@ class EnumerationMappingTests(unittest.TestCase):
         requirements = list(graph.subjects(RDF.type, DD.PropertyRequirement))
         self.assertEqual(len(requirements), len(set(requirements)))
         self.assertIn(
-            URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-416-2003'),
+            URIRef(f'{BASE}/property-requirements/0009-room-ifma-areamgmt/sia-416-2003'),
             set(requirements),
         )
 

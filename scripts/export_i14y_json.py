@@ -49,6 +49,18 @@ def slug(text: str) -> str:
     return text or 'item'
 
 
+def version_segment(value: Any) -> str:
+    text = str(value or '').strip()
+    if re.fullmatch(r'\d+\.\d+\.\d+', text):
+        return text
+    return slug(text) if text else ''
+
+
+def has_version_segment(uri: str) -> bool:
+    tail = str(uri or '').rstrip('/').rsplit('/', 1)[-1]
+    return bool(re.fullmatch(r'\d+\.\d+\.\d+', tail))
+
+
 def parse_date(value: Any) -> str | None:
     if value is None:
         return None
@@ -146,8 +158,36 @@ def read_dictionary_public(wb) -> dict[str, Any]:
     return meta
 
 
+def read_header(wb) -> dict[str, Any]:
+    if 'Header' not in wb.sheetnames:
+        return {}
+    ws = wb['Header']
+    meta = {}
+    for row in ws.iter_rows(values_only=True):
+        if not row or row[0] in (None, ''):
+            continue
+        key = str(row[0]).strip()
+        value = row[1] if len(row) > 1 else None
+        if value not in (None, ''):
+            meta[key] = value
+    return meta
+
+
+def resource_base_from_header(header: dict[str, Any], publisher: str, lindas_graph: str, version: str | None = None) -> str:
+    dictionary_uri = str(header.get('DictionaryUri') or '').strip().rstrip('/')
+    if dictionary_uri.startswith('https://lindas.admin.ch/fobl/kbob/'):
+        family_base = dictionary_uri
+    else:
+        family_base = f'{lindas_graph}/bdch' if publisher == 'bdch' else lindas_graph
+    segment = version_segment(version or header.get('DictionaryVersion'))
+    if segment and not has_version_segment(family_base):
+        return f'{family_base}/{segment}'
+    return family_base
+
+
 def infer_context(path: Path) -> WorkbookContext:
     wb = load_workbook(path, data_only=True)
+    header = read_header(wb)
     meta = read_dictionary_public(wb)
     name = path.stem
     if 'kbob' in name.lower():
@@ -159,15 +199,16 @@ def infer_context(path: Path) -> WorkbookContext:
     else:
         title = name
         publisher = slug(name)
-    title = first_nonempty(meta.get('Title'), meta.get('Name'), title)
-    publisher = first_nonempty(meta.get('Owner / Publisher'), publisher)
+    base_publisher = publisher
+    title = first_nonempty(meta.get('Title'), meta.get('Name'), header.get('DictionaryName (EN)'), title)
+    publisher = first_nonempty(header.get('OrganizationCode'), meta.get('Owner / Publisher'), publisher)
     contact_email = meta.get('ContactEmail')
-    version = first_nonempty(meta.get('Version'), '0.1.0')
+    version = first_nonempty(meta.get('Version'), header.get('DictionaryVersion'), '0.1.0')
     release_date = parse_date(meta.get('ReleaseDate'))
     modified_date = parse_date(meta.get('ModifiedDate')) or release_date
     lindas_graph = 'https://lindas.admin.ch/fobl/kbob/dd-fm'
-    lindas_base = f'{lindas_graph}/bdch' if publisher == 'bdch' else lindas_graph
-    dataset_identifier = slug(name)
+    lindas_base = resource_base_from_header(header, base_publisher, lindas_graph, version)
+    dataset_identifier = slug(first_nonempty(header.get('DictionaryCode'), name))
     dataset_uri = f'https://i14y.admin.ch/catalog/{dataset_identifier}'
     return WorkbookContext(path, wb, title, publisher, contact_email, version, release_date, modified_date, meta, lindas_graph, lindas_base, dataset_identifier, dataset_uri)
 
@@ -244,12 +285,22 @@ def build_dataset_payload(ctx: WorkbookContext) -> dict[str, Any]:
     )
     doc_urls = split_listish(meta.get('DocumentationURLs'))
     related_urls = split_listish(meta.get('RelatedResourceURLs'))
+
+    # Construct safe identifiers list: include dataset identifier and optionally a
+    # sanitized workbook stem (no paths or extensions). Avoid adding raw file paths
+    # like 'templates/xxx.xlsx' which the I14Y API rejects.
+    workbook_stem = ctx.path.stem if getattr(ctx, 'path', None) else ''
+    workbook_identifier = slug(workbook_stem)
+    identifiers = [ctx.dataset_identifier]
+    if workbook_identifier and workbook_identifier != ctx.dataset_identifier:
+        identifiers.append(workbook_identifier)
+
     data = {
         'accessRights': code_model(first_nonempty(meta.get('AccessRights'), 'public')),
         'description': descriptions,
         'publisher': identifier_model(ctx.publisher),
         'title': title_ml,
-        'identifiers': [ctx.dataset_identifier, display_workbook_path(ctx.path)],
+        'identifiers': identifiers,
         'issued': ctx.release_date,
         'modified': ctx.modified_date,
         'version': ctx.version,
