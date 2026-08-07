@@ -541,14 +541,20 @@ def validate_bundle(bundle: dict[str, Any]) -> list[str]:
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser()
-    ap.add_argument('workbooks', nargs='*', default=[
-        str(BASE_DIR / 'templates' / 'Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx'),
-        str(BASE_DIR / 'templates' / 'Strukturvorlage_AreaMgmt_v0.5.0.xlsx'),
-    ])
-    ap.add_argument('--out', default=str(DEFAULT_OUT))
+    ap = argparse.ArgumentParser(
+        description='Export validated SchemaForge workbook(s) to an I14Y-oriented JSON bundle.'
+    )
+    ap.add_argument('workbooks', nargs='+', help='Path(s) to Strukturvorlage workbook file(s) to process. Provide one or more workbook file paths.')
+    ap.add_argument('--out', default=str(DEFAULT_OUT), help='Output path for the generated JSON bundle.')
     args = ap.parse_args(argv)
-    bundle = build_bundle([Path(p) for p in args.workbooks])
+
+    # Validate input files exist
+    paths = [Path(p) for p in args.workbooks]
+    missing = [str(p) for p in paths if not p.exists()]
+    if missing:
+        ap.error('The following workbook files were not found: ' + ', '.join(missing))
+
+    bundle = build_bundle(paths)
     errs = validate_bundle(bundle)
     if errs:
         bundle['validationErrors'] = errs
@@ -563,4 +569,5 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    raise SystemExit(main())
+    import sys
+    raise SystemExit(main(sys.argv[1:]))

@@ -615,13 +615,20 @@ def add_ifc_class_alignment(g, uri, row):
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser()
-    p.add_argument('workbooks', nargs='*', default=[
-        'templates/Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx',
-        'templates/Strukturvorlage_AreaMgmt_v0.5.0.xlsx',
-    ])
-    p.add_argument('--out', default='out')
+    p=argparse.ArgumentParser(
+        description='Map SchemaForge workbook(s) to RDF/Turtle output.'
+    )
+    p.add_argument('workbooks', nargs='+', help='One or more Strukturvorlage workbook file paths to process.')
+    p.add_argument('--outdir', default='out', help='Directory to write RDF output into.')
     args=p.parse_args(argv)
+
+    paths=[Path(p) for p in args.workbooks]
+    missing=[str(p) for p in paths if not p.exists()]
+    if missing:
+        p.error('The following workbook files were not found: ' + ', '.join(missing))
+
+    outdir=Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
 
     workbooks = [
         (load_workbook(path, data_only=True), load_workbook(path, data_only=False), path, legacy_prefix_for_path(path))
