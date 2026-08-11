@@ -9,6 +9,7 @@ import argparse, ast, json, re
 LINDAS_BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm'
 BDCH = 'bdch'
 IFC_CLASS_BASE = 'https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class'
+BSDD = Namespace('https://identifier.buildingsmart.org/uri/')
 QUDT = Namespace('http://qudt.org/schema/qudt/')
 PROV = Namespace('http://www.w3.org/ns/prov#')
 DD = Namespace('https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/')
@@ -102,6 +103,22 @@ def mint_value_uri(base, enum_id, position, lexical):
 
 def mint_requirement_uri(base, template_id, property_id):
     return URIRef(f"{base}/property-requirements/{slug(template_id)}/{slug(property_id)}")
+
+
+def build_document_item_ref_mapping(docs):
+    """Build mapping of document names to their item references for validation."""
+    mapping = {}
+    for doc in docs:
+        doc_name = str(doc.get('DocumentName (EN)') or '').strip()
+        if not doc_name:
+            continue
+        item_refs = set()
+        # Collect all item references for this document
+        item_ref = str(doc.get('DocumentItemReference') or '').strip()
+        if item_ref:
+            item_refs.add(item_ref)
+        mapping[doc_name] = item_refs
+    return mapping
 
 
 def parse_value_list(value, sheet_name, row_no, column):
@@ -214,7 +231,8 @@ def build_enumerations(values_rows, sheet_name='Values'):
                 suffix += 1
                 candidate = f"{base_candidate}-{suffix}"
             enum_id = candidate
-            diagnostics.append(f'{sheet_name} row {row_no}: WARNING generated missing Enumeration-ID -> {enum_id}')
+            # Enumeration IDs are system-generated when absent; record as informational diagnostics (no warning)
+            diagnostics.append(f'{sheet_name} row {row_no}: generated missing Enumeration-ID -> {enum_id}')
         if enum_id in by_id:
             raise ValueError(f'{sheet_name} row {row_no} duplicates Enumeration-ID: {enum_id}')
         lists = {
@@ -634,8 +652,6 @@ def main(argv=None):
         (load_workbook(path, data_only=True), load_workbook(path, data_only=False), path, legacy_prefix_for_path(path))
         for path in args.workbooks
     ]
-    outdir=Path(args.out)
-    outdir.mkdir(parents=True,exist_ok=True)
 
     g=Graph()
     g.bind('rdfs', RDFS)
@@ -679,6 +695,8 @@ def main(argv=None):
         gop_uri_by_code = {}
         document_uri_by_name = {}
         document_ids_seen = set()
+        # v1.0.0+: Build document item reference mapping for validation
+        doc_item_refs = build_document_item_ref_mapping(docs)
 
         for doc in docs:
             row_no = doc.get('_row', '?')
@@ -695,8 +713,11 @@ def main(argv=None):
                 doc_id = candidate
                 diagnostics.append(f'{Path(path).name}: Documents row {row_no}: WARNING generated missing Document-ID -> {doc_id}')
             doc_code = str(doc.get('Document-Code') or '').strip()
+            # v1.0.0+: Read DocumentItemReference
+            doc_item_ref = str(doc.get('DocumentItemReference') or '').strip()
             # mark as seen to avoid collisions
             document_ids_seen.add(doc_id)
+            # v1.0.0+: Use bSDD-style document IRI
             doc_uri = mint_from_id(base, 'documents', doc_id)
             for key in [
                 doc_id, doc_code, doc.get('DocumentName (EN)'), doc.get('Bezeichnung (DE)'),
@@ -704,12 +725,18 @@ def main(argv=None):
             ]:
                 if norm(key):
                     document_uri_by_name[norm(key)] = doc_uri
-            g.add((doc_uri, RDF.type, DD.Document))
+            # v1.0.0+: Use bSDD:ReferenceDocument pattern
+            g.add((doc_uri, RDF.type, BSDD.ReferenceDocument))
             g.add((doc_uri, RDF.type, SCHEMA.CreativeWork))
+            # Legacy compatibility - also add DD.Document type
+            g.add((doc_uri, RDF.type, DD.Document))
             g.add((dataset_uri, DD.hasDocument, doc_uri))
+            # v1.0.0+: Add bSDD:hasDocument as well for alignment
+            g.add((dataset_uri, BSDD.hasDocument, doc_uri))
             add_pref_labels(g, doc_uri, doc.get('Bezeichnung (DE)'), doc.get('DocumentName (EN)'), doc.get('Désignation (FR)'), doc.get('Designazione (IT)'))
             if doc_code:
                 g.add((doc_uri, SKOS.notation, Literal(doc_code)))
+                g.add((doc_uri, BSDD.documentCode, Literal(doc_code)))
             for identifier in [doc_id, doc_code]:
                 if identifier:
                     g.add((doc_uri, DCTERMS.identifier, Literal(identifier)))
@@ -723,6 +750,10 @@ def main(argv=None):
                 g.add((doc_uri, DCTERMS.modified, Literal(str(doc.get('Version date')))))
             if doc.get('Provenance (PROV)'):
                 g.add((doc_uri, PROV.wasAttributedTo, Literal(str(doc.get('Provenance (PROV)')))))
+            # v1.0.0+: Add DocumentItemReference if present
+            if doc_item_ref:
+                g.add((doc_uri, BSDD.documentItemReference, Literal(doc_item_ref)))
+                g.add((doc_uri, DD.documentItemReference, Literal(doc_item_ref)))
             add_resource_links(g, doc_uri, dataset_uri, doc_uri=doc.get('GUID/URI'))
 
         for c in classes:
@@ -758,9 +789,31 @@ def main(argv=None):
                 g.add((uri, RDFS.comment, Literal(f"IFC entity: {c.get('IfcObject Entity')}")))
             if c.get('PredefinedType'):
                 g.add((uri, RDFS.comment, Literal(f"IFC predefined type: {c.get('PredefinedType')}")))
+            # v1.0.0+: Updated document reference handling with item-level references
             related_doc = c.get('RelatedDocumentName (EN)') or c.get('RelatedDocuments')
+            related_doc_item = str(c.get('RelatedDocumentItemReference') or '').strip()
             if related_doc and norm(related_doc) in document_uri_by_name:
-                g.add((uri, DD.referencesDocument, document_uri_by_name[norm(related_doc)]))
+                doc_uri = document_uri_by_name[norm(related_doc)]
+                # v1.0.0+: Use bSDD:referencesDocument pattern
+                g.add((uri, BSDD.referencesDocument, doc_uri))
+                # Legacy compatibility
+                g.add((uri, DD.referencesDocument, doc_uri))
+                # v1.0.0+: Link to specific document section if item reference provided
+                if related_doc_item:
+                    # Validate that item reference exists in the document
+                    if related_doc in doc_item_refs and related_doc_item in doc_item_refs[related_doc]:
+                        # Create a blank node for the section reference
+                        section_ref = URIRef(f"{doc_uri}#section-{slug(related_doc_item)}")
+                        g.add((section_ref, RDF.type, BSDD.DocumentSection))
+                        g.add((section_ref, BSDD.sectionReference, Literal(related_doc_item)))
+                        g.add((doc_uri, BSDD.hasSection, section_ref))
+                        g.add((uri, BSDD.referencesSection, section_ref))
+                    else:
+                        # Item reference not found in document - log warning
+                        diagnostics.append(f'{Path(path).name}: Classes row {row_no}: WARNING RelatedDocumentItemReference {related_doc_item} not found in document {related_doc}')
+                        # Still create the link for backward compatibility
+                        g.add((uri, BSDD.referencesDocumentSection, Literal(related_doc_item)))
+                        g.add((uri, DD.referencesDocumentSection, Literal(related_doc_item)))
 
         for gop in gops:
             row_no = gop.get('_row', '?')
@@ -802,6 +855,24 @@ def main(argv=None):
             if gop.get('Descrizione (IT)'):
                 g.add((gop_uri, SKOS.definition, Literal(str(gop.get('Descrizione (IT)')), lang='it')))
                 g.add((gop_uri, DCTERMS.description, Literal(str(gop.get('Descrizione (IT)')), lang='it')))
+            # v1.0.0+: Document reference handling for GroupOfProperties
+            related_doc = gop.get('RelatedDocumentName (EN)')
+            related_doc_item = str(gop.get('RelatedDocumentItemReference') or '').strip()
+            if related_doc and norm(related_doc) in document_uri_by_name:
+                doc_uri = document_uri_by_name[norm(related_doc)]
+                g.add((gop_uri, BSDD.referencesDocument, doc_uri))
+                g.add((gop_uri, DD.referencesDocument, doc_uri))
+                if related_doc_item:
+                    if related_doc in doc_item_refs and related_doc_item in doc_item_refs[related_doc]:
+                        section_ref = URIRef(f"{doc_uri}#section-{slug(related_doc_item)}")
+                        g.add((section_ref, RDF.type, BSDD.DocumentSection))
+                        g.add((section_ref, BSDD.sectionReference, Literal(related_doc_item)))
+                        g.add((doc_uri, BSDD.hasSection, section_ref))
+                        g.add((gop_uri, BSDD.referencesSection, section_ref))
+                    else:
+                        diagnostics.append(f'{Path(path).name}: GroupOfProperties row {row_no}: WARNING RelatedDocumentItemReference {related_doc_item} not found in document {related_doc}')
+                        g.add((gop_uri, BSDD.referencesDocumentSection, Literal(related_doc_item)))
+                        g.add((gop_uri, DD.referencesDocumentSection, Literal(related_doc_item)))
             add_resource_links(g, gop_uri, dataset_uri)
 
         value_uris_by_scheme_id = {}
@@ -826,6 +897,26 @@ def main(argv=None):
             if scheme['status']:
                 g.add((scheme_uri, DD.status, Literal(scheme['status'])))
             add_resource_links(g, scheme_uri, dataset_uri)
+            # v1.0.0+: Document reference handling for Values (EnumerationSchemes)
+            row = scheme.get('row', {})
+            row_no = row.get('_row', '?')
+            related_doc = row.get('RelatedDocumentName (EN)')
+            related_doc_item = str(row.get('RelatedDocumentItemReference') or '').strip()
+            if related_doc and norm(related_doc) in document_uri_by_name:
+                doc_uri = document_uri_by_name[norm(related_doc)]
+                g.add((scheme_uri, BSDD.referencesDocument, doc_uri))
+                g.add((scheme_uri, DD.referencesDocument, doc_uri))
+                if related_doc_item:
+                    if related_doc in doc_item_refs and related_doc_item in doc_item_refs[related_doc]:
+                        section_ref = URIRef(f"{doc_uri}#section-{slug(related_doc_item)}")
+                        g.add((section_ref, RDF.type, BSDD.DocumentSection))
+                        g.add((section_ref, BSDD.sectionReference, Literal(related_doc_item)))
+                        g.add((doc_uri, BSDD.hasSection, section_ref))
+                        g.add((scheme_uri, BSDD.referencesSection, section_ref))
+                    else:
+                        diagnostics.append(f'{Path(path).name}: Values row {row_no}: WARNING RelatedDocumentItemReference {related_doc_item} not found in document {related_doc}')
+                        g.add((scheme_uri, BSDD.referencesDocumentSection, Literal(related_doc_item)))
+                        g.add((scheme_uri, DD.referencesDocumentSection, Literal(related_doc_item)))
             for value in scheme['values']:
                 val_uri = mint_value_uri(base, scheme['id'], value['position'], value['canonical'])
                 value_uris.append(val_uri)
@@ -922,6 +1013,24 @@ def main(argv=None):
                     g.add((uri, DD.hasAllowedValue, val_uri))
                     g.add((val_uri, DD.valueOfProperty, uri))
                     g.add((uri, SKOS.related, val_uri))
+            # v1.0.0+: Document reference handling for Properties
+            related_doc = prop.get('RelatedDocumentName (EN)')
+            related_doc_item = str(prop.get('RelatedDocumentItemReference') or '').strip()
+            if related_doc and norm(related_doc) in document_uri_by_name:
+                doc_uri = document_uri_by_name[norm(related_doc)]
+                g.add((uri, BSDD.referencesDocument, doc_uri))
+                g.add((uri, DD.referencesDocument, doc_uri))
+                if related_doc_item:
+                    if related_doc in doc_item_refs and related_doc_item in doc_item_refs[related_doc]:
+                        section_ref = URIRef(f"{doc_uri}#section-{slug(related_doc_item)}")
+                        g.add((section_ref, RDF.type, BSDD.DocumentSection))
+                        g.add((section_ref, BSDD.sectionReference, Literal(related_doc_item)))
+                        g.add((doc_uri, BSDD.hasSection, section_ref))
+                        g.add((uri, BSDD.referencesSection, section_ref))
+                    else:
+                        diagnostics.append(f'{Path(path).name}: Properties row {row_no}: WARNING RelatedDocumentItemReference {related_doc_item} not found in document {related_doc}')
+                        g.add((uri, BSDD.referencesDocumentSection, Literal(related_doc_item)))
+                        g.add((uri, DD.referencesDocumentSection, Literal(related_doc_item)))
 
         templates, matrix_diagnostics = build_matrix_model(
             wb, wb_formula, path, base, dataset_uri, classes, props, gops, docs,
@@ -944,7 +1053,9 @@ def main(argv=None):
             g.add((cls['uri'], DD.hasDataTemplate, t_uri))
             if group:
                 g.add((t_uri, DD.includesGroupOfProperties, group['uri']))
+            # v1.0.0+: Updated document reference handling for DataTemplates
             for doc in template['documents']:
+                g.add((t_uri, BSDD.referencesDocument, doc['uri']))
                 g.add((t_uri, DD.referencesDocument, doc['uri']))
             if template['status']:
                 g.add((t_uri, DD.status, Literal(str(template['status']))))
@@ -968,7 +1079,9 @@ def main(argv=None):
                 g.add((prop['uri'], DD.requiredByTemplate, req_uri))
                 if group:
                     g.add((req_uri, DD.inGroupOfProperties, group['uri']))
+                # v1.0.0+: Updated document reference handling for PropertyRequirements
                 for doc in template['documents']:
+                    g.add((req_uri, BSDD.referencesDocument, doc['uri']))
                     g.add((req_uri, DD.referencesDocument, doc['uri']))
                 g.add((req_uri, DD.inclusionMarker, Literal(str(requirement['marker']))))
                 g.add((req_uri, DD.requirementLevel, Literal('included')))
