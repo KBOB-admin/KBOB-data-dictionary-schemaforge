@@ -1,5 +1,12 @@
 # Minimales DD-Publikationsvokabular
 
+Normative Quelle und öffentliche Versionshistorie:
+
+- [`KBOB-data-dictionary-schema`](https://github.com/KBOB-admin/KBOB-data-dictionary-schema)
+- [aktuelles Turtle-Artefakt](https://raw.githubusercontent.com/KBOB-admin/KBOB-data-dictionary-schema/main/ontology/natdd-core.ttl)
+
+Dieses Dokument beschreibt, wie SchemaForge das Vokabular verwendet. Es ist keine zweite normative Begriffsdefinition. Bei Abweichungen ist das Schema-Repository maßgebend.
+
 Namespace:
 
 - `dd: <https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/>`
@@ -11,7 +18,7 @@ Ein schlankes Strukturvokabular fuer publizierte Data Dictionaries. Es ersetzt n
 
 Die Publikation verwendet etablierte Vokabulare zuerst:
 
-- Data-Dictionary-Datensaetze werden als `dcat:Dataset` und `dd:DataDictionary` publiziert. Das nutzerseitige Dictionary-Label stammt aus `Header.DictionaryName (...)`; die konkrete Excel-Datei wird separat als `dd:sourceWorkbook` festgehalten.
+- Data-Dictionary-Datensaetze werden als `dcat:Dataset` und `dd:DataDictionary` publiziert. Das nutzerseitige Dictionary-Label stammt aus `Header.DictionaryName (...)`; die konkrete Excel-Datei wird als `prov:Entity` mit `dcterms:identifier` modelliert und ueber `prov:wasDerivedFrom` sowie `dcterms:source` verknuepft.
 - Klassen werden als `rdfs:Class` publiziert.
 - Properties werden als `rdf:Property` publiziert.
 - Enumeration Schemes werden als `skos:ConceptScheme` und `dd:EnumerationScheme` publiziert.
@@ -34,7 +41,17 @@ Die Publikation verwendet etablierte Vokabulare zuerst:
 - `dd:Document`
   - ein Dokumenteintrag aus dem Tab `Documents`
 - `dd:DataTemplate`
-  - eine publizierte Data-Template-Zeile aus dem Tab `Data_Template`
+  - ein ueber `DataTemplate-ID` identifiziertes Template aus dem Tab `Data_Template`; mehrere Zeilen duerfen zu demselben Template beitragen
+- `dd:DocumentType`
+  - zusaetzlicher Typ fuer terminale Klassen eines als `Document type taxonomy` gekennzeichneten Klassenbestands
+- `dd:TaxonomyNode`
+  - zusaetzlicher Typ fuer nicht-terminale Navigationsknoten eines als `Document type taxonomy` gekennzeichneten Klassenbestands
+
+Bei einer Dokumenttyp-Taxonomie bleibt jede Ressource zugleich `rdfs:Class`. Die
+naechste vorhandene uebergeordnete Klasse wird standardkonform mit
+`rdfs:subClassOf` publiziert. Der `Class-Code` wird als `skos:notation`
+ausgegeben. Dadurch koennen terminale Dokumenttypen getrennt gezaehlt und die
+Taxonomieknoten weiterhin hierarchisch durchsucht werden.
 - `dd:PropertyRequirement`
   - eine kontextuelle Property-Anforderung innerhalb eines Data Templates; n-ary Ressource zwischen Data Template, Class und Property
 
@@ -51,7 +68,7 @@ Die Publikation verwendet etablierte Vokabulare zuerst:
 - `dd:hasDocument`
   - Dictionary -> Document
 - `dd:hasDataTemplate`
-  - Dictionary oder Class -> Data Template
+  - Dictionary -> Data Template
 - `dd:appliesToClass`
   - Data Template oder Property Requirement -> Class
 - `dd:includesGroupOfProperties`
@@ -91,9 +108,7 @@ Die Publikation verwendet etablierte Vokabulare zuerst:
 - `dd:contextualUnit`
   - Property Requirement -> QUDT-URI oder Einheitsliteral aus der allgemeinen Property-Definition
 - `dd:inGroupOfProperties`
-  - Property -> Group of Properties
-- `dd:groupContainsProperty`
-  - Group of Properties -> Property
+  - Property Requirement -> Group of Properties im jeweiligen Data-Template-Kontext
 - `dd:alignedWithIfcPset`
   - Gruppe/Property -> IFC-Property-Set-URI
 - `dd:ifcObjectEntity`
@@ -102,8 +117,6 @@ Die Publikation verwendet etablierte Vokabulare zuerst:
   - Klasse -> IFC-spezifischer Predefined-Type-Anker
 - `dd:dictionaryRecord`
   - semantische Ressource -> I14Y-Dataset-/Katalogeintrag-URI
-- `dd:sourceWorkbook`
-  - Data Dictionary Dataset -> konkreter Excel-Dateiname der Publikationsquelle
 - `dd:datatype`
   - Property -> `Properties.DataType (Base Type)` als publizierter Basisdatentyp
 - `dd:ifcDatatype`
@@ -126,19 +139,37 @@ Multilinguale Labels werden auf Schemes und Values als `skos:prefLabel` publizie
 
 ## Versionierte Ressourcen-URIs
 
-`Header.DictionaryUri` beschreibt die unversionierte Dictionary-Familie. Fuer publizierte LINDAS-Ressourcen wird daraus zusammen mit `Header.DictionaryVersion` eine versionierte Ressourcenbasis gebildet:
+`Header.DictionaryUri` beschreibt den explizit zugeteilten Dictionary-Namespace. Vor einer Publikationsfreigabe bleibt dies eine neutrale `https://example.com/...`-URI. Eine LINDAS-URI wird erst nach einer manuellen Publikationsentscheidung eingetragen und muss dann die konkrete Version enthalten.
 
 ```text
-{DictionaryUri}/{DictionaryVersion}
+https://lindas.admin.ch/fobl/kbob/dd-fm/{organization}/{dictionary-name}/{DictionaryVersion}/
 ```
 
 Beispiel:
 
 ```text
-https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0
+https://lindas.admin.ch/fobl/kbob/dd-fm/ifma/data_dictionary_area_management/0.5.0/
 ```
 
-Alle Klassen, Properties, Data Templates, Enumeration Schemes und Enumeration Values werden unter dieser versionierten Basis gemintet. Damit bleiben vertraglich referenzierte Versionen stabil und koennen parallel zu spaeteren Dictionary-Versionen publiziert bleiben. Falls `DictionaryUri` bereits mit einem SemVer-Segment endet, wird die Version nicht erneut angehaengt.
+Alle Klassen, Properties, Data Templates, Enumeration Schemes und Enumeration Values werden unter dieser versionierten Basis gemintet. SchemaForge verwendet eine absolute `DictionaryUri` unveraendert und haengt die Version nicht erneut an. Bei einer neutralen, unversionierten `example.com`-URI wird `DictionaryVersion` fuer lokale Vorabkonvertierungen einmalig angehaengt; ein solches Artefakt ist nicht fuer LINDAS freigegeben.
+
+SchemaForge publiziert ausserdem zwei klar getrennte Dictionary-Knoten:
+
+```turtle
+<https://lindas.admin.ch/fobl/kbob/dd-fm/>
+  a dcat:DatasetSeries ;
+  dct:hasVersion <https://lindas.admin.ch/fobl/kbob/dd-fm/0.3.0/> .
+
+<https://lindas.admin.ch/fobl/kbob/dd-fm/0.3.0/>
+  a dcat:Dataset, dd:DataDictionary ;
+  dct:isVersionOf <https://lindas.admin.ch/fobl/kbob/dd-fm/> ;
+  dcat:inSeries <https://lindas.admin.ch/fobl/kbob/dd-fm/> ;
+  owl:versionInfo "0.3.0" .
+```
+
+Der versionierte `Header.DictionaryUri` identifiziert die konkrete Publikation. SchemaForge leitet die zugehoerige unversionierte Serie durch Entfernen des abschliessenden SemVer-Segments ab. Ein spaeteres Release erhaelt eine neue freigegebene Versions-URI und ersetzt die bestehende Version nicht.
+
+Eine i14y-URI ist keine Dictionary-Identitaet. SchemaForge erzeugt insbesondere keine i14y-URI aus dem Excel-Dateinamen. Falls ein bereits existierender i14y-Eintrag explizit als `Header.I14yDatasetUri` bereitgestellt wird, wird er ausschliesslich als `dcat:landingPage` am versionierten Dictionary publiziert. Fehlt dieses Metadatum, wird keine i14y-URI erfunden.
 
 ## URI-Strategie fuer Enumeration Values
 
@@ -184,8 +215,8 @@ Jeder einzelne Enumeration Value sollte im Workbook eine eigene stabile ID oder 
     <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum/values/0001-gfa>,
     <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum/values/0002-parking>,
     <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum/values/0003-userdefined> ;
-  dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
-  prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> .
+  dct:source <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/> ;
+  prov:wasDerivedFrom <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/> .
 
 <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/enumerations/predefinedtype-enum/values/0002-parking>
   a skos:Concept, dd:EnumerationValue, dd:AllowedValue ;
@@ -193,7 +224,7 @@ Jeder einzelne Enumeration Value sollte im Workbook eine eigene stabile ID oder 
   skos:prefLabel "PARKING"@en, "PARKING"@de ;
   skos:notation "PARKING" ;
   dd:enumerationPosition 2 ;
-  dct:source <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> .
+  dct:source <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/> .
 
 <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/properties/predefinedtype>
   a rdf:Property ;
@@ -214,7 +245,9 @@ Dieses Vokabular ist bewusst minimal gehalten, damit ein schlank publiziertes Da
 
 ## Data Templates und Property Requirements
 
-Die `Data_Template`-Matrix wird als deskriptiver RDF-Layer publiziert. Eine Matrixzeile wird zu einer `dd:DataTemplate`-Ressource. Jede nicht-leere Property-Zelle in dieser Zeile wird zu einer eigenen `dd:PropertyRequirement`-Ressource.
+Die `Data_Template`-Matrix wird als deskriptiver RDF-Layer publiziert. Alle Matrixzeilen mit derselben stabilen `DataTemplate-ID` werden zu einer `dd:DataTemplate`-Ressource aggregiert. Jede nicht-leere Property-Zelle wird zu einer eigenen `dd:PropertyRequirement`-Ressource.
+
+Das Data Dictionary verknuepft seine Templates ueber `DataDictionary → dd:hasDataTemplate → DataTemplate`. Die fachliche Anwendbarkeit wird ausschliesslich in der Richtung `DataTemplate → dd:appliesToClass → Class` publiziert; eine inverse `Class → dd:hasDataTemplate → DataTemplate`-Kante wird nicht erzeugt.
 
 Das ist bewusst ein n-ary Modell:
 
@@ -255,29 +288,31 @@ Die allgemeine Property behaelt immer ihre vollstaendige Enumeration-Scheme-Verk
 
 ### Data-Template-URI-Strategie
 
-Das Workbook enthaelt derzeit keine expliziten Data-Template-IDs. Fuer das MVP wird eine deterministische URI aus Matrixzeile, Class-ID und GoP-ID gebildet:
+Spalte B des Tabs `Data_Template` enthaelt die stabile `DataTemplate-ID`. Dieselbe ID wird ueber mehrere Zeilen wiederholt, wenn ein Data Template mehrere GoPs organisiert. Die URI lautet:
 
 ```text
-.../data-templates/{row}-{class-id}-{gop-id-or-no-group}
+.../data-templates/{data-template-id}
 ```
 
 Beispiel:
 
 ```text
-https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0/data-templates/0009-room-ifma-areamgmt
+https://lindas.admin.ch/fobl/kbob/dd-fm/0.3.0/data-templates/gebaeude-dt
 ```
 
-Diese Strategie ist stabil, solange die Matrixzeilen nicht umsortiert werden. Langfristig sollte das Workbook eine explizite Data-Template-ID oder Assignment-ID erhalten.
+Die Identitaet bleibt beim Umsortieren oder Einfuegen von Zeilen stabil. Alle Zeilen mit derselben ID muessen dieselbe Class und dieselben Governance-Werte verwenden. Unterschiedliche LOIN-Angaben der aggregierten Zeilen werden als mehrere Werte am Data Template erhalten.
 
 Property-Requirement-URIs liegen unter:
 
 ```text
-.../property-requirements/{data-template-id}/{property-id}
+.../property-requirements/{data-template-id}/{group-id-or-ungrouped}/{property-id}
 ```
 
 ### Groups of Properties
 
-`GroupOfProperties` bleibt eine eigenstaendige Ressource. Die Matrixspalte fuer GoP wird als `dd:includesGroupOfProperties` am Data Template und als `dd:inGroupOfProperties` an den Property Requirements publiziert.
+`GroupOfProperties` bleibt eine eigenstaendige Ressource. Jede Zeile kann null oder eine GoP referenzieren; ueber die wiederholte `DataTemplate-ID` werden daraus am Data Template `0..n` Kanten `dd:includesGroupOfProperties`. Die Singularform ist korrekt, weil jede RDF-Kante genau eine GoP als Objekt hat. Am Property Requirement wird der Zeilenkontext mit `dd:inGroupOfProperties` publiziert.
+
+`Properties.IfcPropertySet (Pset) / IfcQuantitySet (Qto)` ist ausschliesslich IFC-Ausrichtungsmetadatum. Auch bei textlicher Uebereinstimmung mit einem GoP-Code wird daraus weder `dd:inGroupOfProperties` noch eine inverse GoP-Property-Kante inferiert.
 
 Es wird nicht inferiert, dass die Auswahl einer Gruppe automatisch alle Properties der Gruppe einschliesst. Requirements entstehen nur aus explizit nicht-leeren Property-Zellen. Dadurch koennen Teilmengen einer Gruppe ohne doppelte Requirements beschrieben werden.
 

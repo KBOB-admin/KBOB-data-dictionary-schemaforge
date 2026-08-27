@@ -18,7 +18,6 @@
         "Internal spaces (net floor areas according to SIA 416)"@en ;
     skos:exactMatch <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSpaceGFA> ;
     prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-areamgmt-v0-5-0> ;
-    dd:hasDataTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/data-templates/0009-room-ifma-areamgmt> ;
     dd:ifcObjectEntity <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSpace> ;
     dd:ifcPredefinedType <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSpaceGFA> ;
     dd:referencesDocument <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/documents/sn-504-416-areas-and-volumes-of-buildings> .
@@ -32,8 +31,6 @@
         "KBOB FM object class for a site as a spatial unit of a developed or undeveloped plot."@en ;
     skos:exactMatch <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSite> ;
     prov:wasDerivedFrom <https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5> ;
-    dd:hasDataTemplate <https://lindas.admin.ch/fobl/kbob/dd-fm/data-templates/0005-site-kbob-grundstuck-architekt>,
-        <https://lindas.admin.ch/fobl/kbob/dd-fm/data-templates/0006-site-no-group> ;
     dd:ifcObjectEntity <https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSite> ;
     dd:referencesDocument <https://lindas.admin.ch/fobl/kbob/dd-fm/documents/kbob-dk-fm-i14y-csv> .
 
@@ -576,4 +573,3 @@
         <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0009-room-ifma-areamgmt/sia-416-2003>,
         <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/property-requirements/0010-external-room-ifma-areamgmt/sia-416-2003> ;
     dd:usesEnumerationScheme <https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/enumerations/area-type-sia-416-code-enum> .
-

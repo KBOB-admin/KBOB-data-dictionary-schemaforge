@@ -10,10 +10,14 @@ LINDAS_BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm'
 BDCH = 'bdch'
 IFC_CLASS_BASE = 'https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class'
 BSDD = Namespace('https://identifier.buildingsmart.org/uri/')
+BSDD_DEF = Namespace('https://bsdd.buildingsmart.org/def#')
 QUDT = Namespace('http://qudt.org/schema/qudt/')
 PROV = Namespace('http://www.w3.org/ns/prov#')
 DD = Namespace('https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/')
 SCHEMA = Namespace('https://schema.org/')
+DCAT = Namespace('http://www.w3.org/ns/dcat#')
+DCAT_DATASET_SERIES = URIRef('http://www.w3.org/ns/dcat#DatasetSeries')
+DCAT_IN_SERIES = URIRef('http://www.w3.org/ns/dcat#inSeries')
 
 
 def slug(s):
@@ -82,6 +86,35 @@ def norm(value):
     return re.sub(r'\s+', ' ', str(value).strip()).casefold()
 
 
+def class_taxonomy(classes):
+    """Infer taxonomy roles and nearest parents from stable class codes."""
+    by_code = {
+        str(row.get('Class-Code') or '').strip(): row
+        for row in classes
+        if str(row.get('Class-Code') or '').strip()
+        and norm(row.get('Category/Kategorie/Catégorie/Categoria')) == 'document type taxonomy'
+    }
+    roles = {}
+    parents = {}
+    for code, row in by_code.items():
+        description = ' '.join(
+            str(row.get(column) or '')
+            for column in ('Description (EN)', 'Beschreibung (DE)')
+        ).casefold()
+        is_node = 'hierarchiestufe' in description or any(
+            candidate != code and candidate.startswith(code)
+            for candidate in by_code
+        )
+        roles[code] = 'taxonomy-node' if is_node else 'document-type'
+        parent_codes = [
+            candidate for candidate in by_code
+            if candidate != code and code.startswith(candidate)
+        ]
+        if parent_codes:
+            parents[code] = max(parent_codes, key=len)
+    return roles, parents
+
+
 def require_id(row, column, sheet_name):
     value = str(row.get(column) or '').strip()
     if not value:
@@ -101,7 +134,11 @@ def mint_value_uri(base, enum_id, position, lexical):
     return URIRef(f"{base}/enumerations/{slug(enum_id)}/values/{position:04d}-{slug(lexical)}")
 
 
-def mint_requirement_uri(base, template_id, property_id):
+def mint_requirement_uri(base, template_id, property_id, group_context=None):
+    if group_context is not None:
+        return URIRef(
+            f"{base}/property-requirements/{slug(template_id)}/{slug(group_context)}/{slug(property_id)}"
+        )
     return URIRef(f"{base}/property-requirements/{slug(template_id)}/{slug(property_id)}")
 
 
@@ -224,7 +261,7 @@ def build_enumerations(values_rows, sheet_name='Values'):
         # Allow missing Enumeration-ID by generating a stable id from the English designation
         enum_id = str(row.get('Enumeration-ID') or '').strip()
         if not enum_id:
-            base_candidate = slug(designation_en) if designation_en else f'generated-{row_no}'
+            base_candidate = f'{slug(designation_en)}-enum' if designation_en else f'generated-{row_no}-enum'
             candidate = base_candidate
             suffix = 1
             while candidate in by_id:
@@ -423,8 +460,8 @@ def build_matrix_model(wb_data, wb_formula, path, base, dataset_uri, classes, pr
                 continue
             document_cols.append((col, doc, str(label).strip()))
 
-    templates = []
-    used_template_ids = set()
+    template_id_col = row2.get(norm('DataTemplate-ID'))
+    templates_by_id = {}
     used_requirement_uris = set()
     for row_idx in range(5, ws.max_row + 1):
         row_values = [cell_value(wb_data, wb_formula, sheet_name, row_idx, c) for c in range(1, ws.max_column + 1)]
@@ -452,10 +489,17 @@ def build_matrix_model(wb_data, wb_formula, path, base, dataset_uri, classes, pr
             raise ValueError(f'Data_Template row {row_idx} in {Path(path).name} has assignments but no resolvable Class label')
         if group_label not in (None, '') and not group:
             raise ValueError(f'Data_Template row {row_idx} in {Path(path).name} references unknown GroupOfProperties: {group_label}')
-        template_id = f'{row_idx:04d}-{cls["id"]}-{group["id"] if group else "no-group"}'
-        if template_id in used_template_ids:
-            raise ValueError(f'Data_Template row {row_idx} in {Path(path).name} produces duplicate template ID: {template_id}')
-        used_template_ids.add(template_id)
+        supplied_template_id = cell_value(wb_data, wb_formula, sheet_name, row_idx, template_id_col) if template_id_col else None
+        if template_id_col:
+            template_id = str(supplied_template_id or '').strip()
+            if not template_id:
+                raise ValueError(f'Data_Template row {row_idx} in {Path(path).name} has content but no DataTemplate-ID')
+        else:
+            template_id = f'{row_idx:04d}-{cls["id"]}-{group["id"] if group else "no-group"}'
+            diagnostics.append(
+                f'{Path(path).name}: Data_Template row {row_idx}: WARNING legacy row-level DataTemplate identity; '
+                'add DataTemplate-ID to aggregate 0..n GroupOfProperties under one DataTemplate'
+            )
         template_uri = mint_from_id(base, 'data-templates', template_id)
         status = cell_value(wb_data, wb_formula, sheet_name, row_idx, governance_anchor + 1) if governance_anchor else None
         version_date = cell_value(wb_data, wb_formula, sheet_name, row_idx, governance_anchor + 2) if governance_anchor else None
@@ -468,7 +512,8 @@ def build_matrix_model(wb_data, wb_formula, path, base, dataset_uri, classes, pr
         requirements = []
         for col, prop, label, raw, marker in property_assignments:
             prop_id = prop['id']
-            req_uri = mint_requirement_uri(base, template_id, prop_id)
+            group_context = (group['id'] if group else 'ungrouped') if template_id_col else None
+            req_uri = mint_requirement_uri(base, template_id, prop_id, group_context)
             if req_uri in used_requirement_uris:
                 raise ValueError(f'Data_Template row {row_idx} in {Path(path).name} creates duplicate requirement for property {prop_id}')
             used_requirement_uris.add(req_uri)
@@ -502,26 +547,59 @@ def build_matrix_model(wb_data, wb_formula, path, base, dataset_uri, classes, pr
             requirements.append({
                 'uri': req_uri,
                 'property': prop,
+                'group': group,
                 'marker': marker,
                 'uses_complete_scheme': bool(is_x and scheme_uri),
                 'scheme_uri': scheme_uri,
                 'allowed_value_uris': allowed_value_uris,
             })
-        templates.append({
-            'id': template_id,
-            'uri': template_uri,
-            'row': row_idx,
-            'class': cls,
-            'group': group,
-            'documents': selected_docs,
-            'requirements': requirements,
-            'status': status,
-            'version_date': version_date,
-            'provenance': provenance,
-            'loin': loin,
-            'dataset_uri': dataset_uri,
-        })
-    return templates, diagnostics
+        existing = templates_by_id.get(template_id)
+        if existing:
+            if existing['class']['uri'] != cls['uri']:
+                raise ValueError(
+                    f'Data_Template row {row_idx} in {Path(path).name} reuses DataTemplate-ID {template_id} '
+                    f'for a different Class ({cls["id"]} instead of {existing["class"]["id"]})'
+                )
+            for field, current in [('status', status), ('version_date', version_date), ('provenance', provenance)]:
+                previous = existing[field]
+                if previous not in (None, '') and current not in (None, '') and lexical(previous) != lexical(current):
+                    raise ValueError(
+                        f'Data_Template row {row_idx} in {Path(path).name} has inconsistent {field} '
+                        f'for DataTemplate-ID {template_id}'
+                    )
+                if previous in (None, '') and current not in (None, ''):
+                    existing[field] = current
+            for key, current in loin.items():
+                if current not in (None, '') and all(
+                    lexical(value) != lexical(current) for value in existing['loin'][key]
+                ):
+                    existing['loin'][key].append(current)
+            if group and all(item['uri'] != group['uri'] for item in existing['groups']):
+                existing['groups'].append(group)
+            for doc in selected_docs:
+                if all(item['uri'] != doc['uri'] for item in existing['documents']):
+                    existing['documents'].append(doc)
+            existing['requirements'].extend(requirements)
+            existing['rows'].append(row_idx)
+        else:
+            templates_by_id[template_id] = {
+                'id': template_id,
+                'uri': template_uri,
+                'rows': [row_idx],
+                'class': cls,
+                'groups': [group] if group else [],
+                'documents': selected_docs,
+                'requirements': requirements,
+                'status': status,
+                'version_date': version_date,
+                'provenance': provenance,
+                'loin': {
+                    key: ([value] if value not in (None, '') else [])
+                    for key, value in loin.items()
+                },
+                'dataset_uri': dataset_uri,
+            }
+    return list(templates_by_id.values()), diagnostics
 
 
 def normalize_predefined_type(value):
@@ -549,10 +627,6 @@ def ifc_predefined_class_uri(ifc_entity, predefined_type):
     return URIRef(f'{IFC_CLASS_BASE}/{entity}{predefined}')
 
 
-def dataset_uri_for_workbook(path):
-    return URIRef(f"https://i14y.admin.ch/catalog/{slug(Path(path).stem)}")
-
-
 def header_metadata(wb):
     if 'Header' not in wb.sheetnames:
         return {}
@@ -568,16 +642,28 @@ def header_metadata(wb):
     return meta
 
 
-def resource_base_from_header(header, dict_prefix=''):
+def dictionary_family_from_header(header, dict_prefix=''):
     dictionary_uri = str(header.get('DictionaryUri') or '').strip().rstrip('/')
     version = version_segment(header.get('DictionaryVersion'))
-    if dictionary_uri.startswith('https://lindas.admin.ch/fobl/kbob/'):
+    if re.match(r'^https?://[^/]+(?:/|$)', dictionary_uri):
         family_base = dictionary_uri
     else:
         family_base = LINDAS_BASE if not dict_prefix else f"{LINDAS_BASE}/{dict_prefix}"
+    if version and has_version_segment(family_base):
+        return family_base.rsplit('/', 1)[0]
+    return family_base
+
+
+def resource_base_from_header(header, dict_prefix=''):
+    family_base = dictionary_family_from_header(header, dict_prefix)
+    version = version_segment(header.get('DictionaryVersion'))
     if version and not has_version_segment(family_base):
         return f'{family_base}/{version}'
     return family_base
+
+
+def dictionary_version_uri_from_header(header, dict_prefix=''):
+    return URIRef(f"{resource_base_from_header(header, dict_prefix).rstrip('/')}/")
 
 
 def legacy_prefix_for_path(path):
@@ -593,9 +679,10 @@ def workbook_resources(wb, wb_path, dict_prefix=''):
     docs = rowdict(wb['Documents']) if 'Documents' in wb.sheetnames else []
     concept_rel = rowdict(wb['ConceptRelation'], header_row=2, data_start=5) if 'ConceptRelation' in wb.sheetnames else []
     header = header_metadata(wb)
-    dataset_uri = dataset_uri_for_workbook(wb_path)
     base = resource_base_from_header(header, dict_prefix)
-    return classes, props, gops, vals, docs, concept_rel, dataset_uri, base
+    dictionary_version_uri = dictionary_version_uri_from_header(header, dict_prefix)
+    dictionary_series_uri = URIRef(f"{dictionary_family_from_header(header, dict_prefix).rstrip('/')}/")
+    return classes, props, gops, vals, docs, concept_rel, dictionary_version_uri, dictionary_series_uri, base
 
 
 def add_labels(g, uri, de=None, en=None, fr=None, it=None):
@@ -661,19 +748,25 @@ def main(argv=None):
     g.bind('qudt', QUDT)
     g.bind('owl', OWL)
     g.bind('dd', DD)
+    g.bind('bsdd', BSDD_DEF)
+    g.bind('dcat', DCAT)
     g.bind('schema', SCHEMA)
     g.bind('lindas', Namespace(LINDAS_BASE+'/'))
 
     diagnostics = []
     # process both workbooks
     for wb, wb_formula, path, prefix in workbooks:
-        classes, props, gops, vals, docs, concept_rel, dataset_uri, base = workbook_resources(wb, path, prefix)
+        classes, props, gops, vals, docs, concept_rel, dataset_uri, dictionary_series_uri, base = workbook_resources(wb, path, prefix)
         header = header_metadata(wb)
         enum_schemes, enum_by_designation, enum_diagnostics = build_enumerations(vals)
         diagnostics.extend([f'{Path(path).name}: {line}' for line in enum_diagnostics])
         # dataset provenance node
-        g.add((dataset_uri, RDF.type, URIRef('http://www.w3.org/ns/dcat#Dataset')))
+        g.add((dataset_uri, RDF.type, DCAT.Dataset))
         g.add((dataset_uri, RDF.type, DD.DataDictionary))
+        g.add((dictionary_series_uri, RDF.type, DCAT_DATASET_SERIES))
+        g.add((dataset_uri, DCTERMS.isVersionOf, dictionary_series_uri))
+        g.add((dataset_uri, DCAT_IN_SERIES, dictionary_series_uri))
+        g.add((dictionary_series_uri, DCTERMS.hasVersion, dataset_uri))
         dictionary_name_en = header.get('DictionaryName (EN)') or Path(path).stem
         g.add((dataset_uri, RDFS.label, Literal(str(dictionary_name_en), lang='en')))
         if header.get('DictionaryName (DE)'):
@@ -686,15 +779,20 @@ def main(argv=None):
             g.add((dataset_uri, DCTERMS.identifier, Literal(str(header.get('DictionaryCode')))))
         if header.get('DictionaryVersion'):
             g.add((dataset_uri, OWL.versionInfo, Literal(str(header.get('DictionaryVersion')))))
-        if header.get('DictionaryUri'):
-            g.add((dataset_uri, RDFS.seeAlso, URIRef(str(header.get('DictionaryUri')))))
-        g.add((dataset_uri, DD.sourceWorkbook, Literal(Path(path).name)))
+        if header.get('I14yDatasetUri'):
+            g.add((dataset_uri, DCAT.landingPage, URIRef(str(header.get('I14yDatasetUri')).strip())))
+        source_workbook_uri = URIRef(f'{base}/source-workbooks/{slug(Path(path).name)}')
+        g.add((source_workbook_uri, RDF.type, PROV.Entity))
+        g.add((source_workbook_uri, DCTERMS.identifier, Literal(Path(path).name)))
+        g.add((dataset_uri, PROV.wasDerivedFrom, source_workbook_uri))
+        g.add((dataset_uri, DCTERMS.source, source_workbook_uri))
 
         property_uri_by_code = {}
         class_uri_by_code = {}
         gop_uri_by_code = {}
         document_uri_by_name = {}
         document_ids_seen = set()
+        taxonomy_roles, taxonomy_parents = class_taxonomy(classes)
         # v1.0.0+: Build document item reference mapping for validation
         doc_item_refs = build_document_item_ref_mapping(docs)
 
@@ -776,12 +874,19 @@ def main(argv=None):
             if code:
                 class_uri_by_code[code] = uri
             g.add((uri, RDF.type, RDFS.Class))
+            if code and code in taxonomy_roles:
+                role_type = DD.TaxonomyNode if taxonomy_roles[code] == 'taxonomy-node' else DD.DocumentType
+                g.add((uri, RDF.type, role_type))
             g.add((dataset_uri, DD.hasClass, uri))
+            if code:
+                g.add((uri, SKOS.notation, Literal(code)))
             add_labels(g, uri, c.get('Bezeichnung (DE)'), c.get('Designation (EN)'), c.get('Désignation (FR)'), c.get('Designazione (IT)'))
             if c.get('Beschreibung (DE)'):
                 g.add((uri, SKOS.definition, Literal(str(c.get('Beschreibung (DE)')), lang='de')))
             if c.get('Description (EN)'):
                 g.add((uri, SKOS.definition, Literal(str(c.get('Description (EN)')), lang='en')))
+            if c.get('Status'):
+                g.add((uri, DD.status, Literal(str(c.get('Status')))))
             add_resource_links(g, uri, dataset_uri)
             add_ifc_class_alignment(g, uri, c)
             # preserve IFC entity details as labels/comments
@@ -814,6 +919,12 @@ def main(argv=None):
                         # Still create the link for backward compatibility
                         g.add((uri, BSDD.referencesDocumentSection, Literal(related_doc_item)))
                         g.add((uri, DD.referencesDocumentSection, Literal(related_doc_item)))
+
+        for child_code, parent_code in taxonomy_parents.items():
+            child_uri = class_uri_by_code.get(child_code)
+            parent_uri = class_uri_by_code.get(parent_code)
+            if child_uri is not None and parent_uri is not None:
+                g.add((child_uri, RDFS.subClassOf, parent_uri))
 
         for gop in gops:
             row_no = gop.get('_row', '?')
@@ -855,6 +966,8 @@ def main(argv=None):
             if gop.get('Descrizione (IT)'):
                 g.add((gop_uri, SKOS.definition, Literal(str(gop.get('Descrizione (IT)')), lang='it')))
                 g.add((gop_uri, DCTERMS.description, Literal(str(gop.get('Descrizione (IT)')), lang='it')))
+            if gop.get('Status'):
+                g.add((gop_uri, DD.status, Literal(str(gop.get('Status')))))
             # v1.0.0+: Document reference handling for GroupOfProperties
             related_doc = gop.get('RelatedDocumentName (EN)')
             related_doc_item = str(gop.get('RelatedDocumentItemReference') or '').strip()
@@ -978,15 +1091,14 @@ def main(argv=None):
             if prop.get('IfcPropertySet (Pset)\nIfcQuantitySet (Qto)'):
                 pset_name = str(prop.get('IfcPropertySet (Pset)\nIfcQuantitySet (Qto)'))
                 g.add((uri, RDFS.comment, Literal(f"IFC property set: {pset_name}")))
+                # IFC Pset/Qto is alignment metadata. It must not imply that a
+                # Strukturvorlage Property belongs to a Data Dictionary GoP.
+                g.add((uri, BSDD_DEF.PropertySet, Literal(pset_name)))
                 if pset_name.startswith('http'):
                     pset_uri = URIRef(pset_name)
                     g.add((uri, DD.alignedWithIfcPset, pset_uri))
                 else:
                     g.add((uri, DD.alignedWithIfcPset, Literal(pset_name)))
-                for gcode, guri in gop_uri_by_code.items():
-                    if gcode and (gcode == pset_name or slug(gcode) == slug(pset_name)):
-                        g.add((uri, DD.inGroupOfProperties, guri))
-                        g.add((guri, DD.groupContainsProperty, uri))
             if prop.get('DataType\n(Base Type)'):
                 g.add((uri, DD.datatype, Literal(str(prop.get('DataType\n(Base Type)')))))
                 g.add((uri, RDFS.comment, Literal(f"Data type: {prop.get('DataType\n(Base Type)')}")))
@@ -1040,18 +1152,15 @@ def main(argv=None):
         for template in templates:
             t_uri = template['uri']
             cls = template['class']
-            group = template['group']
             label_parts = [str(cls['row'].get('Designation (EN)') or cls['row'].get('Bezeichnung (DE)') or cls['id'])]
-            if group:
-                label_parts.append(str(group['row'].get('Designation (EN)') or group['row'].get('GoP-Code') or group['id']))
+            label_parts.append(str(template['id']))
             label = ' - '.join(label_parts)
             g.add((t_uri, RDF.type, DD.DataTemplate))
             g.add((dataset_uri, DD.hasDataTemplate, t_uri))
             g.add((t_uri, RDFS.label, Literal(label, lang='en')))
             g.add((t_uri, DCTERMS.identifier, Literal(template['id'])))
             g.add((t_uri, DD.appliesToClass, cls['uri']))
-            g.add((cls['uri'], DD.hasDataTemplate, t_uri))
-            if group:
+            for group in template['groups']:
                 g.add((t_uri, DD.includesGroupOfProperties, group['uri']))
             # v1.0.0+: Updated document reference handling for DataTemplates
             for doc in template['documents']:
@@ -1063,8 +1172,8 @@ def main(argv=None):
                 g.add((t_uri, DCTERMS.modified, Literal(str(template['version_date']))))
             if template['provenance']:
                 g.add((t_uri, PROV.wasAttributedTo, Literal(str(template['provenance']))))
-            for key, value in template['loin'].items():
-                if value:
+            for key, values in template['loin'].items():
+                for value in values:
                     g.add((t_uri, getattr(DD, f'loin{key.capitalize()}'), Literal(str(value))))
             add_resource_links(g, t_uri, dataset_uri)
             for requirement in template['requirements']:
@@ -1077,6 +1186,7 @@ def main(argv=None):
                 g.add((req_uri, DD.appliesToClass, cls['uri']))
                 g.add((req_uri, DD.requiresProperty, prop['uri']))
                 g.add((prop['uri'], DD.requiredByTemplate, req_uri))
+                group = requirement.get('group')
                 if group:
                     g.add((req_uri, DD.inGroupOfProperties, group['uri']))
                 # v1.0.0+: Updated document reference handling for PropertyRequirements

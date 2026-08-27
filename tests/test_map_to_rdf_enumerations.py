@@ -6,7 +6,7 @@ import sys
 
 from openpyxl import load_workbook
 from rdflib import Graph, Literal, Namespace, URIRef
-from rdflib.namespace import RDF, RDFS, SKOS, DCTERMS, OWL
+from rdflib.namespace import RDF, RDFS, SKOS, DCTERMS, OWL, DCAT, PROV
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -15,17 +15,58 @@ import map_to_rdf  # noqa: E402
 
 
 DD = Namespace('https://lindas.admin.ch/fobl/kbob/dd-fm/vocab/')
+BSDD_DEF = Namespace('https://bsdd.buildingsmart.org/def#')
 KBOB_BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm/0.3.0'
-BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm/bdch/0.5.0'
+BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm/ifma/data_dictionary_area_management/0.5.0'
 
 
 class EnumerationMappingTests(unittest.TestCase):
+    def test_document_type_taxonomy_roles_and_nearest_parents(self):
+        rows = [
+            {'Class-Code': 'O', 'Beschreibung (DE)': 'Hierarchiestufe O', 'Category/Kategorie/Catégorie/Categoria': 'Document type taxonomy'},
+            {'Class-Code': 'O02', 'Beschreibung (DE)': 'Hierarchiestufe O02', 'Category/Kategorie/Catégorie/Categoria': 'Document type taxonomy'},
+            {'Class-Code': 'O02001', 'Beschreibung (DE)': 'Projektauftrag', 'Category/Kategorie/Catégorie/Categoria': 'Document type taxonomy'},
+            {'Class-Code': 'O9', 'Beschreibung (DE)': 'Hierarchiestufe O9', 'Category/Kategorie/Catégorie/Categoria': 'Document type taxonomy'},
+        ]
+        roles, parents = map_to_rdf.class_taxonomy(rows)
+        self.assertEqual(roles['O'], 'taxonomy-node')
+        self.assertEqual(roles['O02'], 'taxonomy-node')
+        self.assertEqual(roles['O02001'], 'document-type')
+        self.assertEqual(roles['O9'], 'taxonomy-node')
+        self.assertEqual(parents['O02'], 'O')
+        self.assertEqual(parents['O02001'], 'O02')
+        self.assertEqual(parents['O9'], 'O')
+
     def export_actual_workbooks(self):
         tmp = tempfile.TemporaryDirectory()
         out = Path(tmp.name)
+        publication_inputs = out / 'publication-inputs'
+        publication_inputs.mkdir()
+        kbob_source = ROOT / 'templates' / 'Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx'
+        area_source = ROOT / 'templates' / 'Strukturvorlage_AreaMgmt_v0.5.0.xlsx'
+        kbob = publication_inputs / kbob_source.name
+        area = publication_inputs / area_source.name
+        shutil.copy2(kbob_source, kbob)
+        shutil.copy2(area_source, area)
+        approved_uris = {
+            kbob: 'https://lindas.admin.ch/fobl/kbob/dd-fm/0.3.0/',
+            area: 'https://lindas.admin.ch/fobl/kbob/dd-fm/ifma/data_dictionary_area_management/0.5.0/',
+        }
+        for workbook_path, approved_uri in approved_uris.items():
+            workbook = load_workbook(workbook_path)
+            header = workbook['Header']
+            for row in range(1, header.max_row + 1):
+                if header.cell(row, 1).value == 'DictionaryUri':
+                    header.cell(row, 2).value = approved_uri
+                    break
+            else:
+                workbook.close()
+                raise AssertionError(f'DictionaryUri missing in {workbook_path}')
+            workbook.save(workbook_path)
+            workbook.close()
         map_to_rdf.main([
-            str(ROOT / 'templates' / 'Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx'),
-            str(ROOT / 'templates' / 'Strukturvorlage_AreaMgmt_v0.5.0.xlsx'),
+            str(kbob),
+            str(area),
             '--out',
             str(out),
         ])
@@ -50,6 +91,45 @@ class EnumerationMappingTests(unittest.TestCase):
             map_to_rdf.resource_base_from_header(already_versioned),
             'https://lindas.admin.ch/fobl/kbob/sbb/sbb_fdk_data_dictionary/3.0.0',
         )
+        self.assertEqual(
+            str(map_to_rdf.dictionary_version_uri_from_header(header)),
+            'https://lindas.admin.ch/fobl/kbob/sbb/sbb_fdk_data_dictionary/3.0.0/',
+        )
+
+    def test_neutral_placeholder_is_preserved_until_publication_approval(self):
+        header = {
+            'DictionaryUri': 'https://example.com/sia/sia-416-2003',
+            'DictionaryVersion': '0.0.1',
+        }
+        self.assertEqual(
+            map_to_rdf.resource_base_from_header(header),
+            'https://example.com/sia/sia-416-2003/0.0.1',
+        )
+
+    def test_approved_versioned_uri_is_preserved_without_double_version(self):
+        header = {
+            'DictionaryUri': 'https://lindas.admin.ch/fobl/kbob/dd-fm/ifma/data_dictionary_area_management/0.5.0/',
+            'DictionaryVersion': '0.5.0',
+        }
+        self.assertEqual(
+            map_to_rdf.resource_base_from_header(header),
+            'https://lindas.admin.ch/fobl/kbob/dd-fm/ifma/data_dictionary_area_management/0.5.0',
+        )
+        self.assertEqual(
+            str(map_to_rdf.dictionary_version_uri_from_header(header)),
+            'https://lindas.admin.ch/fobl/kbob/dd-fm/ifma/data_dictionary_area_management/0.5.0/',
+        )
+
+    def test_missing_enumeration_id_uses_validator_canonical_suffix(self):
+        schemes, _by_designation, diagnostics = map_to_rdf.build_enumerations([
+            {
+                '_row': 7,
+                'Designation (EN)': 'Area type SIA 416 code',
+                'Enumeration (EN)': '["1.2"]',
+            }
+        ])
+        self.assertEqual(schemes[0]['id'], 'area-type-sia-416-code-enum')
+        self.assertIn('area-type-sia-416-code-enum', diagnostics[0])
 
     def test_actual_workbooks_publish_schemes_and_values(self):
         tmp, graph = self.export_actual_workbooks()
@@ -73,16 +153,19 @@ class EnumerationMappingTests(unittest.TestCase):
         tmp, graph = self.export_actual_workbooks()
         self.addCleanup(tmp.cleanup)
 
-        template = URIRef(f'{KBOB_BASE}/data-templates/0005-site-kbob-grundstuck-architekt')
+        template = URIRef(f'{KBOB_BASE}/data-templates/grundstueck-dt')
         class_uri = URIRef(f'{KBOB_BASE}/classes/site')
         group_uri = URIRef(f'{KBOB_BASE}/group-of-properties/kbob-grundstuck-architekt')
         document_uri = URIRef(f'{KBOB_BASE}/documents/kbob-dk-fm-i14y-csv')
-        req_guid = URIRef(f'{KBOB_BASE}/property-requirements/0005-site-kbob-grundstuck-architekt/guid')
-        req_site_id = URIRef(f'{KBOB_BASE}/property-requirements/0005-site-kbob-grundstuck-architekt/site-id')
+        req_guid = URIRef(f'{KBOB_BASE}/property-requirements/grundstueck-dt/kbob-grundstuck-architekt/guid')
+        req_site_id = URIRef(f'{KBOB_BASE}/property-requirements/grundstueck-dt/kbob-grundstuck-architekt/site-id')
         prop_guid = URIRef(f'{KBOB_BASE}/properties/guid')
+        dataset = URIRef(f'{KBOB_BASE}/')
 
         self.assertIn((template, RDF.type, DD.DataTemplate), graph)
+        self.assertIn((dataset, DD.hasDataTemplate, template), graph)
         self.assertIn((template, DD.appliesToClass, class_uri), graph)
+        self.assertNotIn((class_uri, DD.hasDataTemplate, template), graph)
         self.assertIn((template, DD.includesGroupOfProperties, group_uri), graph)
         self.assertIn((template, DD.referencesDocument, document_uri), graph)
         self.assertIn((document_uri, RDF.type, DD.Document), graph)
@@ -98,12 +181,50 @@ class EnumerationMappingTests(unittest.TestCase):
         tmp, graph = self.export_actual_workbooks()
         self.addCleanup(tmp.cleanup)
 
-        dataset = URIRef('https://i14y.admin.ch/catalog/strukturvorlage-datadictionary-kbob-fm-v0-9-5')
+        dataset = URIRef(f'{KBOB_BASE}/')
+        series = URIRef('https://lindas.admin.ch/fobl/kbob/dd-fm/')
         self.assertIn((dataset, RDFS.label, None), graph)
         self.assertIn((dataset, RDFS.label, Literal('KBOB FM Data Dictionary', lang='en')), graph)
         self.assertIn((dataset, DCTERMS.identifier, Literal('kbob_fm_data_dictionary')), graph)
         self.assertIn((dataset, OWL.versionInfo, Literal('0.3.0')), graph)
-        self.assertIn((dataset, DD.sourceWorkbook, Literal('Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx')), graph)
+        source = URIRef(f'{KBOB_BASE}/source-workbooks/strukturvorlage-datadictionary-kbob-fm-v0-9-5-xlsx')
+        self.assertIn((source, RDF.type, PROV.Entity), graph)
+        self.assertIn((source, DCTERMS.identifier, Literal('Strukturvorlage_DataDictionary_KBOB_FM_v0.9.5.xlsx')), graph)
+        self.assertIn((dataset, PROV.wasDerivedFrom, source), graph)
+        self.assertIn((dataset, DCTERMS.source, source), graph)
+        self.assertNotIn((dataset, DD.sourceWorkbook, None), graph)
+        self.assertIn((dataset, RDF.type, DCAT.Dataset), graph)
+        self.assertIn((dataset, RDF.type, DD.DataDictionary), graph)
+        self.assertIn((series, RDF.type, URIRef('http://www.w3.org/ns/dcat#DatasetSeries')), graph)
+        self.assertIn((dataset, DCTERMS.isVersionOf, series), graph)
+        self.assertIn((dataset, URIRef('http://www.w3.org/ns/dcat#inSeries'), series), graph)
+        self.assertIn((series, DCTERMS.hasVersion, dataset), graph)
+        self.assertEqual(len(list(graph.subjects(RDF.type, DD.DataDictionary))), 2)
+        self.assertFalse(any(str(subject).startswith('https://i14y.admin.ch/catalog/') for subject in graph.subjects(RDF.type, DD.DataDictionary)))
+
+    def test_repeated_data_template_id_aggregates_zero_to_many_groups(self):
+        tmp, graph = self.export_actual_workbooks()
+        self.addCleanup(tmp.cleanup)
+
+        template = URIRef(f'{KBOB_BASE}/data-templates/gebaeude-dt')
+        groups = set(graph.objects(template, DD.includesGroupOfProperties))
+        self.assertEqual(len(groups), 2)
+        self.assertIn(
+            URIRef(f'{KBOB_BASE}/group-of-properties/kbob-gebaude-architekt'),
+            groups,
+        )
+        self.assertIn(
+            URIRef(f'{KBOB_BASE}/group-of-properties/kbob-gebaude-betriebfm'),
+            groups,
+        )
+        self.assertNotIn((None, DD.groupContainsProperty, None), graph)
+
+        ifc_aligned_property = URIRef(f'{KBOB_BASE}/properties/above-ground')
+        self.assertIn((ifc_aligned_property, BSDD_DEF.PropertySet, None), graph)
+        self.assertNotIn((ifc_aligned_property, DD.inGroupOfProperties, None), graph)
+
+        self.assertIn((URIRef(f'{KBOB_BASE}/classes/site'), DD.status, Literal('Candidate')), graph)
+        self.assertIn((URIRef(f'{KBOB_BASE}/group-of-properties/kbob-grundstuck-architekt'), DD.status, Literal('Candidate')), graph)
 
     def test_property_datatype_ifc_datatype_and_status_are_published(self):
         tmp, graph = self.export_actual_workbooks()
@@ -136,7 +257,7 @@ class EnumerationMappingTests(unittest.TestCase):
         tmp, graph = self.export_actual_workbooks()
         self.addCleanup(tmp.cleanup)
 
-        requirement = URIRef(f'{BASE}/property-requirements/0009-room-ifma-areamgmt/sia-2024-2021')
+        requirement = URIRef(f'{BASE}/property-requirements/nettogeschossflaeche-dt/ifma-areamgmt/sia-2024-2021')
         scheme = URIRef(f'{BASE}/enumerations/room-usage-sia-2024-code-enum')
         self.assertIn((requirement, RDF.type, DD.PropertyRequirement), graph)
         self.assertIn((requirement, DD.usesEnumerationScheme, scheme), graph)
@@ -147,7 +268,7 @@ class EnumerationMappingTests(unittest.TestCase):
         tmp, graph = self.export_actual_workbooks()
         self.addCleanup(tmp.cleanup)
 
-        requirement = URIRef(f'{BASE}/property-requirements/0007-surrounding-area-ifma-areamgmt/sia-416-2003')
+        requirement = URIRef(f'{BASE}/property-requirements/umgebungsflaeche-dt/ifma-areamgmt/sia-416-2003')
         scheme = URIRef(f'{BASE}/enumerations/area-type-sia-416-code-enum')
         value = URIRef(f'{BASE}/enumerations/area-type-sia-416-code-enum/values/0001-1-2')
         self.assertIn((requirement, DD.usesEnumerationScheme, scheme), graph)
@@ -178,7 +299,7 @@ class EnumerationMappingTests(unittest.TestCase):
         requirements = list(graph.subjects(RDF.type, DD.PropertyRequirement))
         self.assertEqual(len(requirements), len(set(requirements)))
         self.assertIn(
-            URIRef(f'{BASE}/property-requirements/0009-room-ifma-areamgmt/sia-416-2003'),
+            URIRef(f'{BASE}/property-requirements/nettogeschossflaeche-dt/ifma-areamgmt/sia-416-2003'),
             set(requirements),
         )
 

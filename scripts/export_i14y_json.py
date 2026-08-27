@@ -18,6 +18,7 @@ import argparse
 import json
 import re
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,13 @@ from openpyxl import load_workbook
 BASE_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = BASE_DIR / 'out' / 'i14y_bundle.json'
 PARTNER_SPEC = BASE_DIR / 'external' / 'apiconsole__partner__v1__Release.json'
+GLOBAL_CONFORMS_TO = [
+    ('https://www.iso.org/standard/75401.html', 'ISO 23386'),
+    ('https://www.iso.org/standard/85391.html', 'ISO 23387'),
+    ('https://www.iso.org/standard/74932.html', 'ISO 12006-3'),
+    ('https://www.dcat-ap.ch/releases/v3/3.0.0.html', 'DCAT-AP CH 3.0.0'),
+    ('https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3', 'IFC 4.3 schema'),
+]
 
 
 def display_workbook_path(path: Path) -> str:
@@ -89,6 +97,19 @@ def email_model(email: str | None):
     return {'email': email} if email else None
 
 
+def vcard_model(email: str | None, *, de_name: str | None = None, en_name: str | None = None, note_de: str | None = None, note_en: str | None = None):
+    if not email:
+        return None
+    obj = {'hasEmail': email}
+    fn = ml(de=de_name, en=en_name)
+    if fn:
+        obj['fn'] = fn
+    note = ml(de=note_de, en=note_en)
+    if note:
+        obj['note'] = note
+    return obj
+
+
 def resource_model(uri: str | None, de=None, en=None, fr=None, it=None):
     if not uri:
         return None
@@ -97,6 +118,10 @@ def resource_model(uri: str | None, de=None, en=None, fr=None, it=None):
     if labels:
         obj['label'] = labels
     return obj
+
+
+def artifact_timestamp() -> str:
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H-%M-%SZ')
 
 
 def split_listish(value: Any) -> list[str]:
@@ -138,11 +163,25 @@ class WorkbookContext:
     version: str
     release_date: str | None
     modified_date: str | None
+    header: dict[str, Any]
     metadata: dict[str, Any]
     lindas_graph: str
     lindas_base: str
     dataset_identifier: str
     dataset_uri: str
+
+
+@dataclass
+class ExportOptions:
+    contact_email: str | None = None
+    landing_page_url: str | None = None
+    workbook_download_url: str | None = None
+    ttl_download_url: str | None = None
+    json_download_url: str | None = None
+    sparql_endpoint_url: str | None = None
+    sparql_endpoint_description_url: str | None = None
+    dataservice_landing_page_url: str | None = None
+    include_distribution_media_types: bool = False
 
 
 def read_dictionary_public(wb) -> dict[str, Any]:
@@ -175,7 +214,7 @@ def read_header(wb) -> dict[str, Any]:
 
 def resource_base_from_header(header: dict[str, Any], publisher: str, lindas_graph: str, version: str | None = None) -> str:
     dictionary_uri = str(header.get('DictionaryUri') or '').strip().rstrip('/')
-    if dictionary_uri.startswith('https://lindas.admin.ch/fobl/kbob/'):
+    if re.match(r'^https?://[^/]+(?:/|$)', dictionary_uri):
         family_base = dictionary_uri
     else:
         family_base = f'{lindas_graph}/bdch' if publisher == 'bdch' else lindas_graph
@@ -200,17 +239,250 @@ def infer_context(path: Path) -> WorkbookContext:
         title = name
         publisher = slug(name)
     base_publisher = publisher
-    title = first_nonempty(meta.get('Title'), meta.get('Name'), header.get('DictionaryName (EN)'), title)
+    title = first_nonempty(
+        header.get('DictionaryName (EN)'),
+        header.get('DictionaryName (DE)'),
+        meta.get('Title'),
+        meta.get('Name'),
+        title,
+    )
     publisher = first_nonempty(header.get('OrganizationCode'), meta.get('Owner / Publisher'), publisher)
+    # Normalise known publisher tokens to canonical identifiers used by I14Y
+    # e.g. 'KBOB' -> 'CH_KBOB'
+    # Robustly normalise common publisher tokens to canonical identifiers used by I14Y
+    if isinstance(publisher, str):
+        pu = publisher.strip()
+        up = pu.upper()
+        if 'KBOB' in up or 'CH_KBOB' in up:
+            publisher = 'CH_KBOB'
+        elif 'BDCH' in up or 'CH_BDCH' in up:
+            publisher = 'CH_BDCH'
+        else:
+            publisher = pu
     contact_email = meta.get('ContactEmail')
-    version = first_nonempty(meta.get('Version'), header.get('DictionaryVersion'), '0.1.0')
+    version = first_nonempty(header.get('DictionaryVersion'), meta.get('Version'), '0.1.0')
     release_date = parse_date(meta.get('ReleaseDate'))
     modified_date = parse_date(meta.get('ModifiedDate')) or release_date
     lindas_graph = 'https://lindas.admin.ch/fobl/kbob/dd-fm'
     lindas_base = resource_base_from_header(header, base_publisher, lindas_graph, version)
     dataset_identifier = slug(first_nonempty(header.get('DictionaryCode'), name))
     dataset_uri = f'https://i14y.admin.ch/catalog/{dataset_identifier}'
-    return WorkbookContext(path, wb, title, publisher, contact_email, version, release_date, modified_date, meta, lindas_graph, lindas_base, dataset_identifier, dataset_uri)
+    return WorkbookContext(path, wb, title, publisher, contact_email, version, release_date, modified_date, header, meta, lindas_graph, lindas_base, dataset_identifier, dataset_uri)
+
+
+def override_contact_email(ctx: WorkbookContext, contact_email: str | None) -> WorkbookContext:
+    if not contact_email:
+        return ctx
+    return WorkbookContext(
+        path=ctx.path,
+        wb=ctx.wb,
+        title=ctx.title,
+        publisher=ctx.publisher,
+        contact_email=contact_email,
+        version=ctx.version,
+        release_date=ctx.release_date,
+        modified_date=ctx.modified_date,
+        header=ctx.header,
+        metadata=ctx.metadata,
+        lindas_graph=ctx.lindas_graph,
+        lindas_base=ctx.lindas_base,
+        dataset_identifier=ctx.dataset_identifier,
+        dataset_uri=ctx.dataset_uri,
+    )
+
+
+def build_contact_point(ctx: WorkbookContext, contact_email: str | None):
+    return vcard_model(
+        contact_email,
+        de_name=f'{ctx.title} Kontakt',
+        en_name=f'{ctx.title} contact',
+        note_de=f'Kontaktstelle fuer Metadaten und Publikation von {ctx.title}.',
+        note_en=f'Contact point for metadata and publication of {ctx.title}.',
+    )
+
+
+def parse_language_codes(value: Any) -> list[str]:
+    codes = []
+    for item in split_listish(value):
+        code = slug(item).replace('-', '')
+        if code in {'de', 'en', 'fr', 'it', 'rm'} and code not in codes:
+            codes.append(code)
+    return codes
+
+
+def infer_dataset_languages(ctx: WorkbookContext) -> list[str]:
+    meta = ctx.metadata
+    languages = []
+    for code in parse_language_codes(meta.get('PrimaryLanguage')):
+        if code not in languages:
+            languages.append(code)
+    for code in parse_language_codes(meta.get('MetadataLanguages')):
+        if code not in languages:
+            languages.append(code)
+    for code, field in [('de', 'DictionaryName (DE)'), ('en', 'DictionaryName (EN)'), ('fr', 'DictionaryName (FR)'), ('it', 'DictionaryName (IT)'), ('rm', 'DictionaryName (RM)')]:
+        if ctx.header.get(field) not in (None, '') and code not in languages:
+            languages.append(code)
+    return languages or ['en']
+
+
+def build_keyword_models(ctx: WorkbookContext) -> list[dict[str, Any]]:
+    meta = ctx.metadata
+    labels: dict[str, dict[str, str]] = {}
+    for lang, field in [('de', 'Keywords (DE)'), ('fr', 'Keywords (FR)'), ('en', 'Keywords (EN)')]:
+        for raw in split_listish(meta.get(field)):
+            key = raw.strip().lower()
+            if not key:
+                continue
+            labels.setdefault(key, {})
+            labels[key][lang] = raw.strip()
+    result = []
+    for key in sorted(labels):
+        result.append({'label': labels[key]})
+    return result
+
+
+def generic_dataset_description(ctx: WorkbookContext) -> dict[str, str]:
+    names = {
+        'de': first_nonempty(ctx.header.get('DictionaryName (DE)'), ctx.header.get('DictionaryName (EN)'), ctx.title),
+        'en': first_nonempty(ctx.header.get('DictionaryName (EN)'), ctx.header.get('DictionaryName (DE)'), ctx.title),
+        'fr': first_nonempty(ctx.header.get('DictionaryName (FR)'), ctx.header.get('DictionaryName (EN)')),
+        'it': first_nonempty(ctx.header.get('DictionaryName (IT)'), ctx.header.get('DictionaryName (EN)')),
+    }
+    return ml(
+        de=f'Datenkatalog {names["de"]}.',
+        en=f'Data dictionary {names["en"]}.',
+        fr=f'Dictionnaire de données {names["fr"]}.' if names['fr'] else None,
+        it=f'Dizionario dei dati {names["it"]}.' if names['it'] else None,
+    )
+
+
+def build_distribution(title: dict[str, str], description: dict[str, str], access_url: str, *, download_url: str | None = None, identifier: str | None = None, format_code: str | None = None, media_type_code: str | None = None, documentation_urls: list[str] | None = None, issued: str | None = None, modified: str | None = None, languages: list[str] | None = None) -> dict[str, Any]:
+    payload = {
+        'title': title,
+        'description': description,
+        'accessUrl': resource_model(access_url),
+        'downloadUrl': resource_model(download_url) if download_url else None,
+        'identifier': identifier,
+        'format': code_model(format_code),
+        'mediaType': code_model(media_type_code),
+        'documentation': [resource_model(url) for url in (documentation_urls or []) if url],
+        'issued': issued,
+        'modified': modified,
+        'languages': [code_model(code) for code in (languages or []) if code],
+    }
+    return {k: v for k, v in payload.items() if v not in (None, [], {})}
+
+
+def build_dataset_distributions(ctx: WorkbookContext, options: ExportOptions) -> list[dict[str, Any]]:
+    meta = ctx.metadata
+    distributions = []
+    languages = ['de', 'en']
+
+    workbook_download_url = first_nonempty(
+        options.workbook_download_url,
+        meta.get('WorkbookDownloadURL'),
+        meta.get('XLSX_Download_URL'),
+        meta.get('SourceWorkbookUrl'),
+    )
+    if workbook_download_url:
+        distributions.append(build_distribution(
+            title=ml(de=f'{ctx.title} Excel-Strukturvorlage', en=f'{ctx.title} Excel workbook'),
+            description=ml(
+                de='Validierte Excel-Strukturvorlage des Data Dictionary.',
+                en='Validated Excel workbook of the data dictionary.',
+            ),
+            access_url=workbook_download_url,
+            download_url=workbook_download_url,
+            identifier=f'{ctx.dataset_identifier}-xlsx',
+            format_code='XLSX',
+            media_type_code='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' if options.include_distribution_media_types else None,
+            issued=ctx.release_date,
+            modified=ctx.modified_date,
+            languages=languages,
+        ))
+
+    ttl_download_url = first_nonempty(options.ttl_download_url, meta.get('TTL_Download_URL'))
+    if ttl_download_url:
+        distributions.append(build_distribution(
+            title=ml(de=f'{ctx.title} RDF/Turtle', en=f'{ctx.title} RDF/Turtle'),
+            description=ml(
+                de='RDF/Turtle-Export des publizierten Data Dictionary.',
+                en='RDF/Turtle export of the published data dictionary.',
+            ),
+            access_url=ttl_download_url,
+            download_url=ttl_download_url,
+            identifier=f'{ctx.dataset_identifier}-ttl',
+            format_code='TTL',
+            media_type_code='text/turtle' if options.include_distribution_media_types else None,
+            issued=ctx.release_date,
+            modified=ctx.modified_date,
+            languages=languages,
+        ))
+
+    json_download_url = first_nonempty(options.json_download_url, meta.get('JSON_Download_URL'))
+    if json_download_url:
+        distributions.append(build_distribution(
+            title=ml(de=f'{ctx.title} JSON', en=f'{ctx.title} JSON'),
+            description=ml(
+                de='JSON-Export des publizierten Data Dictionary.',
+                en='JSON export of the published data dictionary.',
+            ),
+            access_url=json_download_url,
+            download_url=json_download_url,
+            identifier=f'{ctx.dataset_identifier}-json',
+            format_code='JSON',
+            media_type_code='application/json' if options.include_distribution_media_types else None,
+            issued=ctx.release_date,
+            modified=ctx.modified_date,
+            languages=languages,
+        ))
+
+    return distributions
+
+
+def build_dataservice_payload(ctx: WorkbookContext, options: ExportOptions) -> dict[str, Any] | None:
+    endpoint_url = first_nonempty(options.sparql_endpoint_url, ctx.metadata.get('SPARQL_Endpoint'))
+    if not endpoint_url:
+        return None
+
+    contact_email = ctx.contact_email
+    deputy_email = ctx.contact_email if ctx.contact_email and ctx.contact_email != contact_email else None
+    endpoint_description_url = first_nonempty(options.sparql_endpoint_description_url, ctx.metadata.get('QualityAssuranceProcedureUrl'))
+    landing_page_url = first_nonempty(options.dataservice_landing_page_url, options.landing_page_url, ctx.metadata.get('MoreInfoUrl'), ctx.dataset_uri)
+    access_code = first_nonempty(ctx.metadata.get('AccessRights'), 'public')
+    if isinstance(access_code, str):
+        access_code = access_code.strip().upper()
+
+    data = {
+        'accessRights': code_model(access_code),
+        'description': ml(
+            de=f'SPARQL-Endpunkt fuer {ctx.title} auf dem Linked-Data-Dienst.',
+            en=f'SPARQL endpoint for {ctx.title} on the linked data service.',
+        ),
+        'contactPoints': [cp for cp in [build_contact_point(ctx, contact_email)] if cp],
+        'publisher': identifier_model(ctx.publisher),
+        'title': ml(de=f'{ctx.title} SPARQL-Endpunkt', en=f'{ctx.title} SPARQL endpoint'),
+        'identifiers': [f'{ctx.dataset_identifier}-sparql'],
+        'issued': ctx.release_date,
+        'modified': ctx.modified_date,
+        'landingPages': [resource_model(landing_page_url, en='Data service landing page')],
+        'endpointUrls': [resource_model(endpoint_url, en='SPARQL endpoint')],
+        'endpointDescriptions': [resource_model(endpoint_description_url, en='Endpoint description')] if endpoint_description_url else None,
+        'conformsTo': [x for x in [
+            resource_model('https://www.w3.org/TR/sparql11-protocol/', en='SPARQL 1.1 Protocol'),
+            resource_model(ctx.lindas_graph, en='Published LINDAS graph'),
+        ] if x],
+        'responsiblePerson': email_model(contact_email),
+        'responsibleDeputy': email_model(deputy_email),
+        'keywords': [
+            {'label': ml(en='sparql')},
+            {'label': ml(en='linked data')},
+            {'label': ml(en='data service')},
+        ],
+        'version': ctx.version,
+    }
+    data = {k: v for k, v in data.items() if v not in (None, [], {})}
+    return {'data': data}
 
 
 def rowdict(ws, header_row=1, data_start=8):
@@ -237,6 +509,14 @@ def rowdict(ws, header_row=1, data_start=8):
     while start <= ws.max_row and is_guidance_row(start):
         start += 1
 
+    semantic_anchors = {
+        'Classes': ('Class-ID', 'Class-Code', 'Designation (EN)', 'Bezeichnung (DE)'),
+        'Properties': ('Property-ID', 'Property-Code', 'Designation (EN)', 'Bezeichnung (DE)'),
+        'GroupOfProperties': ('GoP-ID', 'GoP-Code', 'Designation (EN)', 'Bezeichnung (DE)'),
+        'Values': ('Enumeration-ID', 'Designation (EN)', 'Bezeichnung (DE)', 'Enumeration (EN)'),
+        'ConceptRelation': ('SourceConceptURI', 'SourceConceptID', 'TargetConceptURI', 'TargetConceptID'),
+    }
+
     for r in range(start, ws.max_row + 1):
         rec = {}
         anyv = False
@@ -245,7 +525,11 @@ def rowdict(ws, header_row=1, data_start=8):
             if v not in (None, ''):
                 anyv = True
             rec[h] = v
-        if anyv:
+        anchors = semantic_anchors.get(ws.title)
+        has_semantic_content = any(
+            rec.get(anchor) not in (None, '') for anchor in anchors
+        ) if anchors else anyv
+        if anyv and has_semantic_content:
             rec['_row'] = r
             rows.append(rec)
     return rows
@@ -269,19 +553,20 @@ def infer_concept_type(prop: dict, values_by_prop: dict[str, list[dict]]) -> tup
     return 'String', {'minLength': 0, 'maxLength': maxlen * 4}
 
 
-def build_dataset_payload(ctx: WorkbookContext) -> dict[str, Any]:
+def build_dataset_payload(ctx: WorkbookContext, options: ExportOptions) -> dict[str, Any]:
     meta = ctx.metadata
+    header = ctx.header
     descriptions = ml(
-        de=first_nonempty(meta.get('Description (DE)'), f'{ctx.title} published from validated schemaforge workbook.'),
-        en=first_nonempty(meta.get('Description (EN)'), f'{ctx.title} published from validated schemaforge workbook.'),
+        de=meta.get('Description (DE)'),
+        en=meta.get('Description (EN)'),
         fr=meta.get('Description (FR)'),
         it=meta.get('Description (IT)'),
-    )
+    ) or generic_dataset_description(ctx)
     title_ml = ml(
-        de=first_nonempty(meta.get('Title (DE)'), ctx.title),
-        en=first_nonempty(meta.get('Title (EN)'), ctx.title),
-        fr=meta.get('Title (FR)'),
-        it=meta.get('Title (IT)'),
+        de=first_nonempty(meta.get('Title (DE)'), header.get('DictionaryName (DE)'), ctx.title),
+        en=first_nonempty(meta.get('Title (EN)'), header.get('DictionaryName (EN)'), ctx.title),
+        fr=first_nonempty(meta.get('Title (FR)'), header.get('DictionaryName (FR)')),
+        it=first_nonempty(meta.get('Title (IT)'), header.get('DictionaryName (IT)')),
     )
     doc_urls = split_listish(meta.get('DocumentationURLs'))
     related_urls = split_listish(meta.get('RelatedResourceURLs'))
@@ -295,33 +580,45 @@ def build_dataset_payload(ctx: WorkbookContext) -> dict[str, Any]:
     if workbook_identifier and workbook_identifier != ctx.dataset_identifier:
         identifiers.append(workbook_identifier)
 
+    # Normalize accessRights code to canonical uppercase token expected by the API
+    access_code = first_nonempty(meta.get('AccessRights'), 'public')
+    if isinstance(access_code, str):
+        access_code = access_code.strip().upper()
+    contact_email = ctx.contact_email
+    deputy_email = ctx.contact_email if ctx.contact_email and ctx.contact_email != contact_email else None
+    contact_points = [build_contact_point(ctx, contact_email)]
+    landing_page_url = first_nonempty(options.landing_page_url, meta.get('MoreInfoUrl'))
+    distributions = build_dataset_distributions(ctx, options)
+    dataset_languages = infer_dataset_languages(ctx)
+    keyword_models = build_keyword_models(ctx)
     data = {
-        'accessRights': code_model(first_nonempty(meta.get('AccessRights'), 'public')),
+        'accessRights': code_model(access_code),
         'description': descriptions,
+        'contactPoints': [cp for cp in contact_points if cp],
         'publisher': identifier_model(ctx.publisher),
         'title': title_ml,
+        # Identifiers are simple strings per DcatDatasetInputModel (array of string)
         'identifiers': identifiers,
         'issued': ctx.release_date,
         'modified': ctx.modified_date,
         'version': ctx.version,
         'versionNotes': ml(de=meta.get('VersionNotes (DE)'), en=meta.get('VersionNotes (EN)'), fr=meta.get('VersionNotes (FR)')),
-        'landingPages': [resource_model(first_nonempty(meta.get('MoreInfoUrl'), ctx.dataset_uri), en='I14Y dataset landing page')],
+        'landingPages': [resource_model(landing_page_url, en='Dataset landing page')] if landing_page_url else None,
         'documentation': [resource_model(u) for u in doc_urls if u],
         'relations': [resource_model(u) for u in related_urls if u],
-        'conformsTo': [x for x in [
-            resource_model(first_nonempty(meta.get('ConformsTo_ISO23386'), 'https://www.iso.org/standard/75401.html'), en='ISO 23386'),
-            resource_model(meta.get('ConformsTo_DCAT_AP_CH'), en='DCAT-AP CH') if meta.get('ConformsTo_DCAT_AP_CH') else None,
-        ] if x],
-        'responsiblePerson': email_model(first_nonempty(ctx.contact_email, 'placeholder@example.org')),
-        'responsibleDeputy': email_model(ctx.contact_email) if ctx.contact_email else None,
-        'keywords': [
-            {'label': ml(en='data dictionary')},
-            {'label': ml(en='schemaforge')},
-            {'label': ml(en='lindas', de='LINDAS')},
-        ],
-        'languages': [code_model(code) for code in ['de', 'en']],
+        'distributions': distributions,
+        'conformsTo': [x for x in (
+            [resource_model(uri, en=label) for uri, label in GLOBAL_CONFORMS_TO] +
+            [resource_model(meta.get('ConformsTo_DCAT_AP_CH'), en='DCAT-AP CH') if meta.get('ConformsTo_DCAT_AP_CH') else None]
+        ) if x],
+        'responsiblePerson': email_model(contact_email),
+        'responsibleDeputy': email_model(deputy_email),
+        'keywords': keyword_models,
+        'languages': [code_model(code) for code in dataset_languages],
     }
     data = {k: v for k, v in data.items() if v not in (None, [], {})}
+    # The partner API OpenAPI snapshot defines DcatDatasetInputModelDataWrapper
+    # with exactly one lower-case `data` property and no extra properties.
     return {'data': data}
 
 
@@ -345,7 +642,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
                 'name': ml(de=c.get('Bezeichnung (DE)'), en=c.get('Designation (EN)'), fr=c.get('Désignation (FR)'), it=c.get('Designazione (IT)')),
                 'description': ml(de=c.get('Beschreibung (DE)'), en=c.get('Description (EN)'), fr=c.get('Description (FR)'), it=c.get('Descrizione (IT)')),
                 'publisher': identifier_model(ctx.publisher),
-                'responsiblePerson': email_model(first_nonempty(ctx.contact_email, 'placeholder@example.org')),
+                'responsiblePerson': email_model(ctx.contact_email),
                 'version': str(c.get('Version date') or ctx.version),
                 'identifiers': [class_id, str(owned)],
                 'conformsTo': [x for x in [
@@ -380,7 +677,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
                 'name': ml(de=g.get('Beschreibung (DE)'), en=g.get('Designation (EN)'), fr=g.get('Description (FR)'), it=g.get('Descrizione (IT)')),
                 'description': ml(de=g.get('Beschreibung (DE)'), en=g.get('Description (EN)'), fr=g.get('Description (FR)'), it=g.get('Descrizione (IT)')),
                 'publisher': identifier_model(ctx.publisher),
-                'responsiblePerson': email_model(first_nonempty(ctx.contact_email, 'placeholder@example.org')),
+                'responsiblePerson': email_model(ctx.contact_email),
                 'version': str(g.get('Version date') or ctx.version),
                 'identifiers': [gop_id, owned],
                 'conformsTo': [x for x in [resource_model(owned, en='LINDAS authoritative GoP IRI'), resource_model(ctx.dataset_uri, en='I14Y dataset record')] if x],
@@ -405,7 +702,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
             'name': ml(de=p.get('Bezeichnung (DE)'), en=p.get('Designation (EN)'), fr=p.get('Désignation (FR)'), it=p.get('Designazione (IT)')),
             'description': ml(de=p.get('Beschreibung (DE)'), en=p.get('Description (EN)'), fr=p.get('Description (FR)'), it=p.get('Descrizione (IT)')),
             'publisher': identifier_model(ctx.publisher),
-            'responsiblePerson': email_model(first_nonempty(ctx.contact_email, 'placeholder@example.org')),
+            'responsiblePerson': email_model(ctx.contact_email),
             'version': str(p.get('Version date') or ctx.version),
             'identifiers': [prop_id, str(owned)],
             'conformsTo': [x for x in [
@@ -468,7 +765,8 @@ def extract_rows(ctx: WorkbookContext):
     return classes, props, gops, values, concept_relations
 
 
-def build_bundle(workbooks: list[Path]):
+def build_bundle(workbooks: list[Path], options: ExportOptions | None = None):
+    options = options or ExportOptions()
     partner_spec = json.loads(PARTNER_SPEC.read_text()) if PARTNER_SPEC.exists() else None
     bundle = {
         'bundleVersion': '0.1.0',
@@ -480,14 +778,16 @@ def build_bundle(workbooks: list[Path]):
             'serverProd': partner_spec['servers'][0]['url'] if partner_spec else None,
         } if partner_spec else None,
         'datasets': [],
+        'dataservices': [],
         'concepts': [],
         'codeListEntries': [],
         'semantic': {'anchors': [], 'skosRelations': [], 'crossLinks': []}
     }
     for wb_path in workbooks:
-        ctx = infer_context(wb_path)
+        ctx = override_contact_email(infer_context(wb_path), options.contact_email)
         classes, props, gops, values, concept_relations = extract_rows(ctx)
-        dataset_payload = build_dataset_payload(ctx)
+        dataset_payload = build_dataset_payload(ctx, options)
+        dataservice_payload = build_dataservice_payload(ctx, options)
         concepts, anchors, skos_relations, code_entries = build_concepts(ctx, classes, props, gops, values, concept_relations)
         bundle['datasets'].append({
             'sourceWorkbook': display_workbook_path(wb_path),
@@ -503,6 +803,12 @@ def build_bundle(workbooks: list[Path]):
                 'conceptRelations': len(concept_relations),
             },
         })
+        if dataservice_payload:
+            bundle['dataservices'].append({
+                'sourceWorkbook': display_workbook_path(wb_path),
+                'datasetIdentifier': ctx.dataset_identifier,
+                'partnerApi': dataservice_payload,
+            })
         bundle['concepts'].extend(concepts)
         bundle['codeListEntries'].extend(code_entries)
         bundle['semantic']['anchors'].extend(anchors)
@@ -546,6 +852,14 @@ def main(argv=None):
     )
     ap.add_argument('workbooks', nargs='+', help='Path(s) to Strukturvorlage workbook file(s) to process. Provide one or more workbook file paths.')
     ap.add_argument('--out', default=str(DEFAULT_OUT), help='Output path for the generated JSON bundle.')
+    ap.add_argument('--contact-email', default=None, help='Override contact email with an email address that already exists as a person in i14y.')
+    ap.add_argument('--landing-page-url', default=None, help='Override the dataset landing page URL.')
+    ap.add_argument('--workbook-download-url', default=None, help='Override the workbook download URL for a dataset distribution.')
+    ap.add_argument('--ttl-download-url', default=None, help='Override the RDF/Turtle download URL for a dataset distribution.')
+    ap.add_argument('--json-download-url', default=None, help='Override the JSON download URL for a dataset distribution.')
+    ap.add_argument('--sparql-endpoint-url', default=None, help='Override the SPARQL endpoint URL for a linked data service export.')
+    ap.add_argument('--sparql-endpoint-description-url', default=None, help='Override the SPARQL endpoint description/documentation URL.')
+    ap.add_argument('--dataservice-landing-page-url', default=None, help='Override the landing page URL used for the generated data service metadata.')
     args = ap.parse_args(argv)
 
     # Validate input files exist
@@ -554,13 +868,61 @@ def main(argv=None):
     if missing:
         ap.error('The following workbook files were not found: ' + ', '.join(missing))
 
-    bundle = build_bundle(paths)
+    options = ExportOptions(
+        contact_email=args.contact_email,
+        landing_page_url=args.landing_page_url,
+        workbook_download_url=args.workbook_download_url,
+        ttl_download_url=args.ttl_download_url,
+        json_download_url=args.json_download_url,
+        sparql_endpoint_url=args.sparql_endpoint_url,
+        sparql_endpoint_description_url=args.sparql_endpoint_description_url,
+        dataservice_landing_page_url=args.dataservice_landing_page_url,
+    )
+    bundle = build_bundle(paths, options=options)
     errs = validate_bundle(bundle)
     if errs:
         bundle['validationErrors'] = errs
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(bundle, ensure_ascii=False, indent=2), encoding='utf8')
+    if bundle.get('datasets'):
+        dataset_payload = bundle['datasets'][0]['partnerApi']
+        dataset_ui_path = out.with_name('i14y_dataset_import_for_ui.json')
+        dataset_ui_path.write_text(json.dumps(dataset_payload, ensure_ascii=False, indent=2), encoding='utf8')
+
+        dataset_slug = slug(bundle['datasets'][0].get('i14yRecordUri', '').rsplit('/', 1)[-1] or 'dataset')
+        stamped_name = f'i14y_dataset_import_for_ui__{dataset_slug}__{artifact_timestamp()}.json'
+        stamped_path = out.with_name(stamped_name)
+        stamped_path.write_text(json.dumps(dataset_payload, ensure_ascii=False, indent=2), encoding='utf8')
+
+        manifest_path = out.with_name('i14y_dataset_import_for_ui__LATEST.txt')
+        manifest_lines = [
+            'Latest i14y dataset upload artifact',
+            f'latest_file={dataset_ui_path.name}',
+            f'versioned_file={stamped_path.name}',
+            f'source_bundle={out.name}',
+            f'generated_utc={artifact_timestamp()}',
+        ]
+        manifest_path.write_text('\n'.join(manifest_lines) + '\n', encoding='utf8')
+    if bundle.get('dataservices'):
+        dataservice_payload = bundle['dataservices'][0]['partnerApi']
+        dataservice_path = out.with_name('i14y_dataservice_import_for_ui.json')
+        dataservice_path.write_text(json.dumps(dataservice_payload, ensure_ascii=False, indent=2), encoding='utf8')
+
+        service_slug = slug(bundle['dataservices'][0].get('datasetIdentifier') or 'dataservice')
+        stamped_service_name = f'i14y_dataservice_import_for_ui__{service_slug}__{artifact_timestamp()}.json'
+        stamped_service_path = out.with_name(stamped_service_name)
+        stamped_service_path.write_text(json.dumps(dataservice_payload, ensure_ascii=False, indent=2), encoding='utf8')
+
+        dataservice_manifest_path = out.with_name('i14y_dataservice_import_for_ui__LATEST.txt')
+        dataservice_manifest_lines = [
+            'Latest i14y data service upload artifact',
+            f'latest_file={dataservice_path.name}',
+            f'versioned_file={stamped_service_path.name}',
+            f'source_bundle={out.name}',
+            f'generated_utc={artifact_timestamp()}',
+        ]
+        dataservice_manifest_path.write_text('\n'.join(dataservice_manifest_lines) + '\n', encoding='utf8')
     print(out)
     print('validation_ok' if not errs else f'validation_errors {len(errs)}')
     if errs:

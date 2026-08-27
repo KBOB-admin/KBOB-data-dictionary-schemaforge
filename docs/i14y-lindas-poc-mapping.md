@@ -42,14 +42,17 @@ Gemäss Spezifikation erforderlich:
 
 Aktuelles PoC-Mapping:
 
-- `title` <- abgeleiteter Arbeitsmappentitel / Titel-Felder aus `Dictionary_public`, sofern vorhanden
-- `description` <- Beschreibungsfelder aus `Dictionary_public`, Fallback: generierter Text
-- `publisher.identifier` <- `Dictionary_public[Owner / Publisher]` oder abgeleitete Organisations-ID (`kbob` / `bdch`)
+- `title` <- primär `Header.DictionaryName (...)`, optional durch `Dictionary_public[Title (...)]` überschrieben
+- `description` <- primär `Dictionary_public[Description (...)]`; falls leer, nur generischer Minimaltext aus dem Dictionary-Namen
+- `publisher.identifier` <- primär `Header.OrganizationCode`, optional `Dictionary_public[Owner / Publisher]`
 - `accessRights.code` <- `Dictionary_public[AccessRights]` oder Fallback `public`
 - `issued` / `modified` <- `ReleaseDate` / `ModifiedDate`
 - `conformsTo` <- ISO 23386 / optionale DCAT-AP-CH-Links
-- `landingPages` <- Fallback-I14Y-Dataset-URI plus optional `MoreInfoUrl`
+- `landingPages` <- nur explizite Landing-Page-URL aus `Dictionary_public[MoreInfoUrl]` oder CLI-Override
 - `relations` / `documentation` <- optionale URL-Listen aus `Dictionary_public`
+- `languages` <- `PrimaryLanguage`, `MetadataLanguages`, sonst aus vorhandenen `Header.DictionaryName (...)`-Sprachen abgeleitet
+- `keywords` <- `Dictionary_public[Keywords (...)]`; keine hart codierten Standard-Tags
+- `distributions` <- `Dictionary_public[TTL_Download_URL]`, `Dictionary_public[JSON_Download_URL]` sowie optionale Workbook-Download-URL per Workbook-Feld oder CLI-Override
 
 ### Concept (`ConceptInputBase` + spezifischer Subtyp)
 
@@ -71,7 +74,7 @@ Aktuelles PoC-Mapping:
 - `name` <- mehrsprachige Labels aus der Arbeitsmappe
 - `description` <- mehrsprachige Definitionen aus der Arbeitsmappe
 - `publisher.identifier` <- gleicher Publisher wie beim Dataset
-- `responsiblePerson.email` <- `ContactEmail` oder Platzhalter, bis ein realer Wert vorhanden ist
+- `responsiblePerson.email` <- `Dictionary_public[ContactEmail]` oder expliziter CLI-Override; kein projekt-spezifischer Fallback mehr
 - `version` <- `Version date` der Arbeitsmappe oder Fallback `0.1.0`
 - `identifiers` <- Arbeitsmappen-Code + autoritative LINDAS-URI
 
@@ -125,16 +128,12 @@ Jeder Concept-Payload behält die autoritative LINDAS-URI in:
 
 ### LINDAS -> I14Y
 
-Jede RDF-Ressource enthält Provenienz-Links zurück zur I14Y-Dataset-URI:
+Jede RDF-Ressource enthält Provenienz-Links zum kanonischen versionierten LINDAS-Data-Dictionary:
 
 - `dcterms:source`
 - `prov:wasDerivedFrom`
 
-Aktuell im PoC verwendetes Dataset-URI-Muster:
-
-- `https://i14y.admin.ch/catalog/<slug-of-workbook>`
-
-Dies ist ein Platzhalter, bis die reale von I14Y erzeugte Dataset-/Record-URI bekannt ist.
+SchemaForge erzeugt keine i14y-URI aus Workbook-Dateinamen. Eine reale, bereits bekannte i14y-Dataset-URI kann optional in `Header.I14yDatasetUri` angegeben werden und wird dann ausschliesslich als `dcat:landingPage` am versionierten Dictionary ausgegeben. Die i14y-Exportpipeline verwaltet ihren eigenen Record-Identifier unabhängig von der LINDAS-RDF-Identität.
 
 ## Aktuelle generierte Artefakte
 
@@ -144,6 +143,8 @@ Dies ist ein Platzhalter, bis die reale von I14Y erzeugte Dataset-/Record-URI be
 ## Hinweise / verbleibende Lücken
 
 - Der reale I14Y-Publisher ist noch nicht gegen die Live-Partner-API implementiert.
-- `responsiblePerson.email` fällt derzeit auf `placeholder@example.org` zurück, falls kein Wert vorhanden ist.
+- Die Tabs **Structure** und **Quality information** werden nicht durch `POST /datasets` befüllt.
+  - `Structure` hat einen eigenen Endpunkt: `POST /datasets/{datasetId}/structures/imports`
+  - Für **Quality information** ist in der vorhandenen Partner-API-Spezifikation kein entsprechender JSON-Import-Endpunkt sichtbar; diese Angaben müssen derzeit separat gepflegt werden.
 - Der Code-List-Entry-Import wird noch nicht an den dedizierten I14Y-Endpunkt gepusht; Einträge bleiben im Bundle unter `codeListEntries` erhalten.
 - Sobald nach einem POST reale I14Y-Record-URIs verfügbar sind, sollte das Bundle aktualisiert werden, damit RDF-Provenienz auf den erzeugten Record statt auf das Platzhaltermuster verweist.

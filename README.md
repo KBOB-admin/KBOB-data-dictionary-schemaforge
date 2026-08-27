@@ -13,6 +13,14 @@ Dieses Repository stellt ein Publikationshilfsmittel für validierte Data Dictio
 Es baut auf dem Repository [`KBOB-data-dictionary`](https://github.com/KBOB-admin/KBOB-data-dictionary) auf und verwendet validierte Data-Dictionary-Arbeitsmappen als Eingabe.
 Wenn die Validierung systemgenerierte Daten oder sichere Normalisierungen in eine validierte Arbeitsmappe zurückschreibt, können auch diese angereicherten Data Dictionaries als Input für diese Publikationspipeline verwendet werden.
 
+Die von SchemaForge erzeugten NatDD-`dd:`-Klassen und -Properties sind im Repository [`KBOB-data-dictionary-schema`](https://github.com/KBOB-admin/KBOB-data-dictionary-schema) normativ dokumentiert. Der dort veröffentlichte `0.x`-Stand verwendet weiterhin den ausdrücklich provisorischen KBOB-Namespace, bis ein künftiger Namespace formal freigegeben und anschließend koordiniert migriert wurde.
+
+Damit sind die Rollen klar getrennt:
+
+- `KBOB-data-dictionary`: Vorlagen und Validierung;
+- `KBOB-data-dictionary-schemaforge`: Transformation und Publikationsartefakte;
+- `KBOB-data-dictionary-schema`: Bedeutung, Versionierung und Governance des RDF-Kernvokabulars.
+
 Aktueller Fokus:
 
 - validierte Arbeitsmappen als Eingabe verwenden
