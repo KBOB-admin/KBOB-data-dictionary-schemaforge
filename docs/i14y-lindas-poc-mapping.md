@@ -89,6 +89,8 @@ Arbeitsmappen-Spalten:
 - Classes: `IFC_URI`, `IfcObject Entity`, `IfcTypeObject Entity`, `PredefinedType`
 - Properties: `IFC_URI`, `IfcPropertySet (Pset) / IfcQuantitySet (Qto)`
 
+Für `IfcPropertySet (Pset) / IfcQuantitySet (Qto)` gilt: Ein Einzelwert wird direkt erfasst; mehrere Referenzen müssen als JSON-Liste aus Strings vorliegen. SchemaForge zerlegt die JSON-Liste und erzeugt für jeden Pset-/Qto-Eintrag eine eigene RDF-Beziehung. Im semantischen I14Y-Index wird das Feld normalisiert als Liste ausgegeben. Zeilenumbruch- und Semikolonlisten werden nicht interpretiert.
+
 PoC-Behandlung:
 
 - In **I14Y JSON** werden IFC-URIs in `conformsTo[]` als Ressourcen-Links erhalten.

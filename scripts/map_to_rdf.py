@@ -178,6 +178,48 @@ def parse_value_list(value, sheet_name, row_no, column):
     return parsed
 
 
+def parse_single_or_json_string_list(value, sheet_name, row_no, column):
+    if value in (None, ''):
+        return []
+    if isinstance(value, (list, tuple)):
+        parsed = list(value)
+    else:
+        text = str(value).strip()
+        if not text:
+            return []
+        if text.startswith('['):
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f'{sheet_name} row {row_no} column {column} must contain a valid JSON list') from exc
+        else:
+            if any(separator in text for separator in ('\n', '\r', ';')):
+                raise ValueError(f'{sheet_name} row {row_no} column {column} must use a JSON list for multiple values')
+            parsed = [text]
+    if not isinstance(parsed, list) or not all(isinstance(item, str) and item.strip() for item in parsed):
+        raise ValueError(f'{sheet_name} row {row_no} column {column} must contain one string or a JSON list of non-empty strings')
+    normalized = [item.strip() for item in parsed]
+    if len(set(normalized)) != len(normalized):
+        raise ValueError(f'{sheet_name} row {row_no} column {column} contains duplicate references')
+    return normalized
+
+
+def add_ifc_set_links(graph: Graph, property_uri: URIRef, raw_value, row_no):
+    pset_names = parse_single_or_json_string_list(
+        raw_value,
+        'Properties',
+        row_no,
+        'IfcPropertySet (Pset) / IfcQuantitySet (Qto)',
+    )
+    for pset_name in pset_names:
+        graph.add((property_uri, RDFS.comment, Literal(f"IFC property set: {pset_name}")))
+        graph.add((property_uri, BSDD_DEF.PropertySet, Literal(pset_name)))
+        if pset_name.startswith('http'):
+            graph.add((property_uri, DD.alignedWithIfcPset, URIRef(pset_name)))
+        else:
+            graph.add((property_uri, DD.alignedWithIfcPset, Literal(pset_name)))
+
+
 def parse_override_list(value, sheet_name, row_no, column, diagnostics, path):
     try:
         return parse_value_list(value, sheet_name, row_no, column)
@@ -1089,16 +1131,12 @@ def main(argv=None):
                 g.add((uri, SKOS.definition, Literal(str(prop.get('Description (EN)')), lang='en')))
             add_resource_links(g, uri, dataset_uri, ifc_uri=prop.get('IFC_URI'), qudt_uri=prop.get('QUDT URI'))
             if prop.get('IfcPropertySet (Pset)\nIfcQuantitySet (Qto)'):
-                pset_name = str(prop.get('IfcPropertySet (Pset)\nIfcQuantitySet (Qto)'))
-                g.add((uri, RDFS.comment, Literal(f"IFC property set: {pset_name}")))
-                # IFC Pset/Qto is alignment metadata. It must not imply that a
-                # Strukturvorlage Property belongs to a Data Dictionary GoP.
-                g.add((uri, BSDD_DEF.PropertySet, Literal(pset_name)))
-                if pset_name.startswith('http'):
-                    pset_uri = URIRef(pset_name)
-                    g.add((uri, DD.alignedWithIfcPset, pset_uri))
-                else:
-                    g.add((uri, DD.alignedWithIfcPset, Literal(pset_name)))
+                add_ifc_set_links(
+                    g,
+                    uri,
+                    prop.get('IfcPropertySet (Pset)\nIfcQuantitySet (Qto)'),
+                    row_no,
+                )
             if prop.get('DataType\n(Base Type)'):
                 g.add((uri, DD.datatype, Literal(str(prop.get('DataType\n(Base Type)')))))
                 g.add((uri, RDFS.comment, Literal(f"Data type: {prop.get('DataType\n(Base Type)')}")))

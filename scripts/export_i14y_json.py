@@ -131,6 +131,32 @@ def split_listish(value: Any) -> list[str]:
     return [p.strip() for p in parts if p and p.strip()]
 
 
+def parse_single_or_json_string_list(value: Any, sheet_name: str, row_no: Any, column: str) -> list[str]:
+    if value in (None, ''):
+        return []
+    if isinstance(value, (list, tuple)):
+        parsed = list(value)
+    else:
+        text = str(value).strip()
+        if not text:
+            return []
+        if text.startswith('['):
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f'{sheet_name} row {row_no} column {column} must contain a valid JSON list') from exc
+        else:
+            if any(separator in text for separator in ('\n', '\r', ';')):
+                raise ValueError(f'{sheet_name} row {row_no} column {column} must use a JSON list for multiple values')
+            parsed = [text]
+    if not isinstance(parsed, list) or not all(isinstance(item, str) and item.strip() for item in parsed):
+        raise ValueError(f'{sheet_name} row {row_no} column {column} must contain one string or a JSON list of non-empty strings')
+    normalized = [item.strip() for item in parsed]
+    if len(set(normalized)) != len(normalized):
+        raise ValueError(f'{sheet_name} row {row_no} column {column} contains duplicate references')
+    return normalized
+
+
 def first_nonempty(*vals):
     for v in vals:
         if v not in (None, ''):
@@ -694,6 +720,7 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
         })
     for p in props:
         prop_id = require_id(p, 'Property-ID', 'Properties')
+        row_no = p.get('_row', '?')
         code = str(p.get('Property-Code') or '').strip()
         owned = owned_uri(ctx.lindas_base, 'properties', prop_id)
         ctype, extra = infer_concept_type(p, by_prop_code)
@@ -720,7 +747,12 @@ def build_concepts(ctx: WorkbookContext, classes: list[dict], props: list[dict],
             'code': code,
             'ownedUri': owned,
             'ifcUri': p.get('IFC_URI'),
-            'ifcPropertySet': p.get('IfcPropertySet (Pset)\nIfcQuantitySet (Qto)'),
+            'ifcPropertySet': parse_single_or_json_string_list(
+                p.get('IfcPropertySet (Pset)\nIfcQuantitySet (Qto)'),
+                'Properties',
+                row_no,
+                'IfcPropertySet (Pset) / IfcQuantitySet (Qto)',
+            ),
             'qudtUri': p.get('QUDT URI'),
             'unitNameEn': p.get('Unit Name (EN)'),
             'dataType': p.get('DataType\n(Base Type)'),

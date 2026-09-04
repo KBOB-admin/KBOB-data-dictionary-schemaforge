@@ -11,6 +11,18 @@ import export_i14y_json  # noqa: E402
 
 
 class I14yRowExtractionTests(unittest.TestCase):
+    def test_ifc_set_json_list_is_normalized_to_multiple_index_values(self):
+        raw = '["Pset_PipeSegmentTypeCommon", "Qto_PipeSegmentBaseQuantities"]'
+        self.assertEqual(
+            ['Pset_PipeSegmentTypeCommon', 'Qto_PipeSegmentBaseQuantities'],
+            export_i14y_json.parse_single_or_json_string_list(
+                raw,
+                'Properties',
+                60,
+                'IfcPropertySet (Pset) / IfcQuantitySet (Qto)',
+            ),
+        )
+
     def test_formula_only_template_row_is_not_exported_as_class(self):
         workbook = Workbook()
         sheet = workbook.active

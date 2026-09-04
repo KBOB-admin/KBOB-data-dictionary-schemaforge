@@ -21,6 +21,28 @@ BASE = 'https://lindas.admin.ch/fobl/kbob/dd-fm/ifma/data_dictionary_area_manage
 
 
 class EnumerationMappingTests(unittest.TestCase):
+    def test_ifc_set_json_list_creates_separate_rdf_relations(self):
+        graph = Graph()
+        prop = URIRef('https://example.com/property/length')
+        raw = '["Pset_PipeSegmentTypeCommon", "Qto_PipeSegmentBaseQuantities"]'
+
+        map_to_rdf.add_ifc_set_links(graph, prop, raw, 60)
+
+        linked = set(graph.objects(prop, DD.alignedWithIfcPset))
+        self.assertEqual(
+            {Literal('Pset_PipeSegmentTypeCommon'), Literal('Qto_PipeSegmentBaseQuantities')},
+            linked,
+        )
+
+    def test_ifc_set_newline_list_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'must use a JSON list'):
+            map_to_rdf.parse_single_or_json_string_list(
+                'Pset_PipeSegmentTypeCommon\nQto_PipeSegmentBaseQuantities',
+                'Properties',
+                60,
+                'IfcPropertySet (Pset) / IfcQuantitySet (Qto)',
+            )
+
     def test_document_type_taxonomy_roles_and_nearest_parents(self):
         rows = [
             {'Class-Code': 'O', 'Beschreibung (DE)': 'Hierarchiestufe O', 'Category/Kategorie/Catégorie/Categoria': 'Document type taxonomy'},
